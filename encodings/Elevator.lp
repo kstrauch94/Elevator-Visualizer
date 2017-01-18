@@ -1,8 +1,5 @@
 %Elevator encoding
 
-#include "../strats/select.lp".
-#include "../strats/train.lp".
-
 #show do/3.
 
 #const istop  = "SAT".
