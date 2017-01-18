@@ -1,0 +1,15 @@
+V 0.2
+
+* add visualization of the last move below each elevator
+* add stat display on every encoding window
+* add text on button window that says which encodings and instance is being used plus some extra instance info
+* add parameter on visualizer to give the encoding and instance with the command line
+* add can now give a plan instead of an encoding to visualize it | added an example file with a plan to the encodings folder
+
+* add new error to the checker (clone) that sees if an elevator is in multiple places at once
+
+* fix imax now has a default value of 100 if not set in encoding
+* fix can now have empty input for the request prompt when using the prompt option in the instance generator
+* fix checker will now only output error or noerror atoms
+
+* upt updated -h help texts, README, and EXAMPLES files.
