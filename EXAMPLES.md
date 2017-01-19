@@ -65,18 +65,23 @@ The difference in the input lies in the first action where the move was changed 
 
 ## Instance Generator
 
-The instance generator has 3 ways of receiving input. 1 of those is used by calling the command:
+The instance generator has multiple ways of receiving input. 1 of those is used by calling the command:
 ```
 $ python InstanceGenerator.py -p
 ```
 
 The -p argument makes the program prompt the user for the specifications of the instance. It asks for the floor amount, elevator amounts, starting position and requests.
 
-The second and third ways are similar. One of them involves passing the starting positions of all elevators using the -s parameter. The other one involves saying how many elevators there are in the instance using the -e parameter, defaulting the starting positions for all elevator to floor 1. By using any of these 2 methods the rest of the parameters must also be given. Use -h to read more about them.
+The inputs can also be passed with arguments from the command line. It can also be specified if the starting position and/or the requests want to be randomized. A seed for the randomizer can be provided with '--seed' argument.
 
-Additionally, the -o parameter can be used to specify the folder name where the instance will be placed. If no folder is named, the instance is created in the same folder where the script is called.
+Additionally, the -o parameter can be used to specify the folder name where the instance will be placed. If no folder is named, the instance is created in the same folder where the script is called. Lastly, the -i parameter is used to specify how many instances want to be created.
 
-The following command will generate a file named "instance10_(1, 2, 3).lp" that has 10 floors, 3 elevators in the starting positions 1, 2 and 3 and an initial call request to go up from floor 7. The requests must have the form "call,D,F" or "del,E,F" with D = up | down, E = elevator number and F = target floor. The floor and starting positions parameters are reflected in the name of the file while the requests are not. 
+The following command will generate a file named "instance10_(1, 2, 3)_2_0.lp" that has 10 floors, 3 elevators in the starting positions 1, 2 and 3 and an initial call request to go up from floor 7. The floor and starting positions parameters are reflected in the name of the file while the requests are not. 
 ```
 $ python InstanceGenerator.py -f 10 -s 1 2 3 -r call,up,7
+```
+
+This command will generate 5 instances where each one has 15 floors, 2 elevators in random positions and 4 randomized requests in a folder named "instance":
+```
+$ python InstanceGenerator.py -f 15 -e 2 -R 4 -i 5 -o instance
 ```

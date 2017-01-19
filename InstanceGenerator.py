@@ -2,6 +2,8 @@ import os, errno
 import sys
 import argparse
 
+import random
+
 CALL = "call"
 DEL = "del"
 
@@ -22,6 +24,7 @@ class InstanceGenerator(object):
         # reqs is
         self.floors = floors
         self.elevators = elevators
+        self.elevatorAmt = len(self.elevators)
         self.reqs = reqs
 
         self.folder = folder
@@ -39,42 +42,68 @@ class InstanceGenerator(object):
         else:
             self.folder = args.folder
 
+            if args.seed is not None:
+                random.seed(args.seed)
+
             if args.floors is None:
                 print "Floor amount must be specified with the -f parameter!"
+                print "Exiting..."
                 return
             self.floors = args.floors
 
-            if args.elevatorstarts is None and args.eAmt is None:
-                print "Either the starting position of the elevator or the amount of elevators must be specified using -s or -e"
-            if args.eAmt is not None:
-                self.elevators = [ 1 for i in range(args.eAmt)]
+            #start creating all instances
 
-            elif args.elevatorstarts is not None:
-                self.elevators = args.elevatorstarts
+            for id in range(args.instanceAmt):
 
-            if args.requests is not None:
-                self.reqs = [ r.split(",") for r in args.requests ]
-                self.testRequests()
-            else:
-                self.reqs = []
+                #setting elevators
+                if args.elevatorstarts is None and args.eAmt is None:
+                    print "Either the starting position of the elevator or the amount of elevators must be specified using -s or -e"
+                    print "Exiting..."
+                    return
+                if args.eAmt is not None:
+                    self.elevators = self.randomizeElevatorPos(args.eAmt)
 
+                elif args.elevatorstarts is not None:
+                    self.elevators = args.elevatorstarts
+
+                self.elevatorAmt = len(self.elevators)
+
+
+                #setting requests
+                if args.requests is not None:
+                    self.reqs = [ r.split(",") for r in args.requests ]
+                    self.testRequests()
+                else:
+                    self.reqs = []
+
+                if args.randreqs is not None:
+                    self.randomizeRequests(args.randreqs)
+                self.writeInstance(id)
 
 
     def parseArgs(self, args):
         parser = argparse.ArgumentParser(description="Creates an instance for an elevator domain. It either prompts for the details or takes them in as arguments. " \
+                                                     "Elevator positions aswell as the requests can be randomized. " \
                                                      "Aside from creating the atoms it creates #const variables for the floor amount, agent amount and req amount.")
 
         parser.add_argument("-p", "--prompt", action="store_true",
                             help="prompt for the details instead of giving them with cmd arguments.")
         parser.add_argument("-f", "--floors", type=int, help="Amount of floors.")
 
-        group = parser.add_mutually_exclusive_group()
-        group.add_argument("-e", "--eAmt", type=int, help="Amount of elevators.")
-        group.add_argument("-s", "--elevatorstarts", type=int, nargs="+",
+        ElevatorGroup = parser.add_mutually_exclusive_group()
+        ElevatorGroup.add_argument("-e", "--eAmt", type=int, help="Creates the specified amount of elevators in randomized positions")
+        ElevatorGroup.add_argument("-s", "--elevatorstarts", type=int, nargs="+",
                             help="Elevator starting positions.")
 
-        parser.add_argument("-r", "--requests", nargs="+",
+        RequestGroup = parser.add_mutually_exclusive_group()
+        RequestGroup.add_argument("-r", "--requests", nargs="+",
                             help="Requests with the form: call,D,F or del,E,F with D = up | down,  E = elevator number and F = target floor.")
+        RequestGroup.add_argument("-R", "--randreqs", type=int, help="Randomize the specified amount of requests", default=None)
+
+        parser.add_argument("--seed", type=int, help="Seed for the randomizer", default=None)
+
+        parser.add_argument("-i", "--instanceAmt", type=int, help="Create the specified amount of instances", default=1)
+
         parser.add_argument("-o", "--folder", default=".")
 
         return parser.parse_args(args)
@@ -118,6 +147,39 @@ class InstanceGenerator(object):
         #               this is what the var has if the input is empty, if the input has spaces, the strip() in the second parsing step deletes them
         if self.reqs != [[""]]:
             self.testRequests()
+
+    def randomizeElevatorPos(self, amt):
+
+        pos = []
+
+        for i in range(amt):
+            pos.append(random.randint(1,self.floors))
+
+        return pos
+
+    def randomizeRequests(self, amt):
+
+        types = ["call", "del"]
+
+        for i in range(amt):
+
+            rtype = types[random.randint(0,1)]
+            if rtype == "call":
+                self.reqs.append(self.randomCall())
+            if  rtype == "del":
+                self.reqs.append(self.randomDeliver())
+
+        self.testRequests()
+
+    def randomCall(self):
+
+        dir = ["up","down"]
+
+        return "call,{d},{floor}".format(d = dir[random.randint(0,1)], floor = random.randint(1, self.floors)).split(",")
+
+    def randomDeliver(self):
+
+        return "del,{eid},{floor}".format(eid = random.randint(1,self.elevatorAmt), floor = random.randint(1, self.floors)).split(",")
 
     def testRequests(self):
 
@@ -164,25 +226,24 @@ class InstanceGenerator(object):
             if exception.errno != errno.EEXIST:
                 raise
 
-    def writeInstance(self):
+    def writeInstance(self, id = ""):
         """
         Writes the instance into a file.
 
         :return file name
         """
-        outFile = "instance{f}_{epos}".format(f = self.floors, epos = tuple(self.elevators))
+        outFile = "instance{f}_{epos}_{reqamt}_".format(f = self.floors, epos = tuple(self.elevators), reqamt=len(self.reqs))
 
 
         self.createFolder(self.folder)
 
         if os.name == "posix" and self.folder != "":
             # posix is the same for mac and linux
-            self.folder = self.folder + "/"
+            foldersep = "/"
         elif self.folder != "":
-            self.folder = self.folder + "\\"
+            foldersep = "\\"
 
-
-        outname = self.folder + outFile + ".lp"
+        outname = self.folder + foldersep + outFile + str(id) + ".lp"
 
         with open(outname, "w") as out:
 
@@ -206,7 +267,6 @@ class InstanceGenerator(object):
             out.write("\n")
             out.write("\n")
 
-            out.write("#const startingReqs={}.\n\n".format(len(self.reqs)))
 
             for r in self.reqs:
                 if r[0] == "call":
@@ -219,7 +279,6 @@ class InstanceGenerator(object):
 def main():
 
     g = InstanceGenerator(sys.argv[1:])
-    g.writeInstance()
 
 if __name__ == "__main__":
     main()

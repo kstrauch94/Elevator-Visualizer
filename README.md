@@ -45,7 +45,6 @@ The "Next Action" button solves the instance. On repeated clicks it remembers th
 - #const agents=N. line with N being the amount of elevators
 - #const floors = F. line with F being the amount of floors
 - #const startID = S. line for every elevator. The ID is replaced with the elevator ID and S is the starting position.
-- #const startingReqs = N line where N is the amount of request at time point 0. This is not currently being used but might be in the future.
 
 
 Example encodings and instances are provided in the encodings folder and in the instances folder respectively.
