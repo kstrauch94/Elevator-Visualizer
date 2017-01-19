@@ -97,6 +97,8 @@ class MainWindow(QtGui.QWidget):
                 return
 
             for enc in self.elevatorWindows:
+                #the double elevatorInterface is because this should only be used with elevatorInterfaceVis object (the first elevatorInterface) which
+                #contains an elevatorInterface object (which is the second one) that actually will add the request to the solver
                 enc.elevatorInterface.elevatorInterface.addRequest(REQ_CALL, dir, floor)
 
     def addDeliverRequest(self):
@@ -136,6 +138,8 @@ class MainWindow(QtGui.QWidget):
                 return
 
             for enc in self.elevatorWindows:
+                # the double elevatorInterface is because this should only be used with elevatorInterfaceVis object (the first elevatorInterface) which
+                # contains an elevatorInterface object (which is the second one) that actually will add the request to the solver
                 enc.elevatorInterface.elevatorInterface.addRequest(REQ_DELIVER, elevator, floor)
 
     def renew(self):

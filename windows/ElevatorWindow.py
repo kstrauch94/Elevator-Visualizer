@@ -242,7 +242,6 @@ class ElevatorInterface():
 
         self.elevatorCount = self.solver.control.get_const("agents").number
         self.floors = self.solver.control.get_const("floors").number
-        self.requestAmount = self.solver.control.get_const("startingReqs").number
 
         self.setElevators()
 
@@ -286,6 +285,14 @@ class ElevatorInterface():
 
         return self.solver.lastMove
 
+    def getStats(self):
+        """
+        It just calls the getStats function from the encoding manager (solver) and return the value
+        :return: list of Stat objects
+        """
+
+        return self.solver.getStats()
+
     def reset(self):
         """
         Creates a new solver object so that it reloads everything.
@@ -309,7 +316,7 @@ class Interface(QtGui.QWidget):
 
         self.elevatorInterface = ElevatorInterfaceVis(enc, Config.instance, Config.size)
 
-        stats = self.elevatorInterface.elevatorInterface.solver.getStats()
+        stats = self.elevatorInterface.elevatorInterface.getStats()
         self.infoPanel = InfoPanel(stats)
 
         self.hbox = QtGui.QHBoxLayout()
@@ -323,30 +330,13 @@ class Interface(QtGui.QWidget):
     def update(self, *__args):
         self.elevatorInterface.update()
         #the double elevator interface is because one if of the class that visualizes it and the other the actual class that holds the data
-        stats = self.elevatorInterface.elevatorInterface.solver.getStats()
+        stats = self.elevatorInterface.elevatorInterface.getStats()
         self.infoPanel.updateStats(stats)
 
     def reset(self):
         self.elevatorInterface.reset()
         stats = self.elevatorInterface.elevatorInterface.solver.getStats()
         self.infoPanel.updateStats(stats)
-
-
-class ElevatorWindow(Interface):
-    """
-    This class just creates a window for a given encoding.
-    """
-    def __init__(self, enc, id):
-        super(ElevatorWindow, self).__init__(enc)
-
-        self.id = id
-
-        self.setGeometry(Config.width, Config.height, Config.width, Config.height)
-        self.setWindowTitle(enc + " (" + str(self.id) + ")")
-
-        #this is here so that when multiple encodings are present the windows are not created in the same spot,
-        #they are created side by side until no more room is left. Then they are created in the same place.
-        self.move((Config.width+100)*(self.id-1), 0)
 
 class InfoPanel(QtGui.QWidget):
 
@@ -379,3 +369,20 @@ class InfoPanel(QtGui.QWidget):
         for s in stats:
             # update label value
             self.stats[s.name].setText(s.string())
+
+
+class ElevatorWindow(Interface):
+    """
+    This class just creates a window for a given encoding.
+    """
+    def __init__(self, enc, id):
+        super(ElevatorWindow, self).__init__(enc)
+
+        self.id = id
+
+        self.setGeometry(Config.width, Config.height, Config.width, Config.height)
+        self.setWindowTitle(enc + " (" + str(self.id) + ")")
+
+        #this is here so that when multiple encodings are present the windows are not created in the same spot,
+        #they are created side by side until no more room is left. Then they are created in the same place.
+        self.move((Config.width+100)*(self.id-1), 0)
