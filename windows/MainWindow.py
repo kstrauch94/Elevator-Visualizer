@@ -1,6 +1,6 @@
 from PyQt4 import QtGui, QtCore
 
-import Config
+import VisConfig, SolverConfig
 import ElevatorWindow
 from Constants import *
 
@@ -8,14 +8,14 @@ from Constants import *
 
 class MainWindow(QtGui.QWidget):
     """
-    Main class. It creates a window with the parameters in the Config.py file.
-    It also creates the buttons and the windows for the encodings in the Config.py file.
+    Main class. It creates a window with the parameters in the VisConfig.py file.
+    It also creates the buttons and the windows for the encodings in the VisConfig.py file.
     """
 
     def __init__(self):
         super(MainWindow, self).__init__()
 
-        self.setGeometry(Config.width, Config.height, Config.width, Config.height)
+        self.setGeometry(VisConfig.width, VisConfig.height, VisConfig.width, VisConfig.height)
         self.setWindowTitle("Elevator")
 
         self.mainVbox = QtGui.QVBoxLayout() #will contain button HBox and another Hbox which contains Elevator Hbox and info Box
@@ -149,23 +149,17 @@ class MainWindow(QtGui.QWidget):
 
     def setInterface(self):
         """
-        Creates a window for every encoding in the Cofig.py file. It also extracts the floor and agent amounts and stores them.
+        Creates a window for every encoding. It also extracts the floor and agent amounts and stores them.
         :return: Void
         """
         # This list contains the reference to all the created windows for the encodings
         self.elevatorWindows = []
 
-        id = 1
-        for enc in Config.encoding:
-            self.elevatorWindows.append(ElevatorWindow.ElevatorWindow(enc, id))
+
+        for id in range(SolverConfig.windows):
+            self.elevatorWindows.append(ElevatorWindow.ElevatorWindow(id))
             self.elevatorWindows[-1].show()
-            id += 1
 
-        text = "Encoding(s) : " + str(Config.encoding)
-        self.instanceInfo["encoding"] = QtGui.QLabel(text, self)
-
-        text = "Instance : " + str(Config.instance)
-        self.instanceInfo["instance"] = QtGui.QLabel(text, self)
 
         text = "floors : " + str(self.elevatorWindows[0].elevatorInterface.floors)
         self.instanceInfo["floors"] = QtGui.QLabel(text, self)
@@ -173,8 +167,6 @@ class MainWindow(QtGui.QWidget):
         text = "Elevators : " + str(self.elevatorWindows[0].elevatorInterface.elevatorCount)
         self.instanceInfo["agents"] = QtGui.QLabel(text, self)
 
-        self.ConfigInfoVbox.addWidget(self.instanceInfo["encoding"])
-        self.ConfigInfoVbox.addWidget(self.instanceInfo["instance"])
         self.ConfigInfoVbox.addWidget(self.instanceInfo["floors"])
         self.ConfigInfoVbox.addWidget(self.instanceInfo["agents"])
         self.ConfigInfoVbox.addStretch(1)
