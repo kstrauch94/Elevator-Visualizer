@@ -10,6 +10,7 @@ error(multactions).
 error(longmove).
 
 error(clone).
+error(badreq).
 
 time(0).
 time(T-1) :- time(T), T > 0.
@@ -57,18 +58,23 @@ abnormal(request(deliver(ID),Floor), T) 	:-	do(E,serve,T), E = elevator(ID),
 % Inertia
 holds(F,T) :- holds(F,T-1), not abnormal(F,T), time(T).
 
-% static laws
+% static laws as errors
 
 
-error(isbelow1, E, T) :- holds(at(E,F),T), F < 1.
-error(isabovemax, E, T) :- holds(at(E,F),T), F > floors.
+error(isbelow1, E, T) 		:- holds(at(E,F),T), F < 1.
+error(isabovemax, E, T) 	:- holds(at(E,F),T), F > floors.
 
-error(multactions, E, T) :- do(E, A, T), do(E, A2, T), A != A2.
+error(multactions, E, T) 	:- do(E, A, T), do(E, A2, T), A != A2.
 
-error(longmove, E, T) :- holds(at(E, F), T-1), holds(at(E, F2), T), |F2-F| > 1.
+error(longmove, E, T) 		:- holds(at(E, F), T-1), holds(at(E, F2), T), |F2-F| > 1.
 
 
-error(clone) :- holds(at(E,F),T), holds(at(E,F2),T), F != F2.
+error(clone, E, T) 			:- holds(at(E,F),T), holds(at(E,F2),T), F != F2.
+
+error(badreq, R, noelev) 	:- holds(R, T), R = request(deliver(ID),Floor), not agent(elevator(ID)).
+error(badreq, R, nofloor) 	:- holds(R, T), R = request(deliver(ID),Floor), not floor(Floor).
+
+error(badreq, R, nofloor) 	:- holds(R, T), R = request(call(D),Floor), not floor(Floor).
 
 noerror(E) :- { error(Type,E,T) : error(Type), time(T) }=0, agent(E).
 
