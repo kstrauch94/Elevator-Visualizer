@@ -1,6 +1,7 @@
 V 0.3
 
 * add Randomization options for the instance generator
+* add Bad request error in the checker
 
 V 0.2
 

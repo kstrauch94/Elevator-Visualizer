@@ -68,4 +68,5 @@ isabovemax  : The elevator is is above the highest floor.
 multactions : The elevator executed more than one action at the same time point.
 longmove    : The elevator moved more than 1 floor in one time point.
 clone       : An elevator is at multiple places at once.
+badreq      : A request directed to a floor that doesnt exist or a deliver request directed to an elevator that doesn't exist.
 ```
