@@ -1,7 +1,7 @@
 from PyQt4 import QtGui, QtCore
 
 import EncodingManager
-import Config
+import SolverConfig, VisConfig
 from Constants import *
 
 import os
@@ -138,16 +138,16 @@ class Elevator():
 
 class ElevatorInterfaceVis(QtGui.QWidget):
     """ Visualizer for the whole instance. Keeps track of every elevator in the instance"""
-    def __init__(self, encoding, instance, size):
+    def __init__(self, id, size):
         """
 
         :param encoding: encoding
         :param instance: instance
-        :param size: size of the squares that represent the floors, usually defined in the Config.py file
+        :param size: size of the squares that represent the floors, usually defined in the VisConfig.py file
         """
         super(ElevatorInterfaceVis, self).__init__()
 
-        self.elevatorInterface = ElevatorInterface(encoding, instance)
+        self.elevatorInterface = ElevatorInterface(id)
         self.size = size
 
         # calculate the total height of the shaft
@@ -197,13 +197,6 @@ class ElevatorInterfaceVis(QtGui.QWidget):
         self.elevatorInterface.update()
         self.updateElevators()
 
-    def getMove(self):
-        """
-        Solve to get the next move. Currently not used as by only using this, the visual part does not get updated.
-        :return: last move
-        """
-        return self.elevatorInterface.getMove()
-
     def reset(self):
         """
         Resets the whole interface and deletes the old elevator visualizers from the layout container. Then, it creates everything again
@@ -229,19 +222,16 @@ class ElevatorInterface():
     """
     Data class for the whole instance. Keeps track of every individual elevator.
     """
-    def __init__(self, encoding, instance):
+    def __init__(self, id):
         """
-        Parameters usually in the Config.py file
-        :param encoding: encoding
-        :param instance: instance
+        Parameters usually in the VisConfig.py file
+        :param id : id of the solver to be used.
         """
 
-        self.instance = instance
-        self.encoding = encoding
-        self.solver = EncodingManager.Solver(self.encoding, self.instance)
+        self.bridge = Connect(id)
 
-        self.elevatorCount = self.solver.control.get_const("agents").number
-        self.floors = self.solver.control.get_const("floors").number
+        self.elevatorCount = self.bridge.getElevatorAmt()
+        self.floors = self.bridge.getFloorAmt()
 
         self.setElevators()
 
@@ -252,7 +242,7 @@ class ElevatorInterface():
         self.elevators = []
 
         for i in range(1, self.elevatorCount + 1):
-            elevatorStart = self.solver.control.get_const("start%d" % (i)).number
+            elevatorStart = self.bridge.startingPosition(i)
             elevator = Elevator(self.floors, elevatorStart)
 
             self.elevators.append(elevator)
@@ -262,7 +252,7 @@ class ElevatorInterface():
         """
         Basically solves to get the next moves and "execute" them.
         """
-        moves = self.getMove()
+        moves = self.bridge.nextMoves()
 
         if moves != None:
             for move in moves:
@@ -274,16 +264,7 @@ class ElevatorInterface():
 
 
     def addRequest(self, type, *params):
-        self.solver.addRequest(type, params)
-
-    def getMove(self):
-        """
-        Just calls the solver
-        :return a list with the last move for every elevator
-        """
-        self.solver.callSolver()
-
-        return self.solver.lastMove
+        self.bridge.addRequest(type, params)
 
     def getStats(self):
         """
@@ -291,7 +272,7 @@ class ElevatorInterface():
         :return: list of Stat objects
         """
 
-        return self.solver.getStats()
+        return self.bridge.getStats()
 
     def reset(self):
         """
@@ -300,8 +281,7 @@ class ElevatorInterface():
 
         It also creates the elevetor object again.
         """
-        self.solver = EncodingManager.Solver(self.encoding, self.instance)
-        self.requestAmount = self.solver.control.get_const("startingReqs").number
+        self.bridge.reset()
 
         self.setElevators()
 
@@ -310,13 +290,13 @@ class Interface(QtGui.QWidget):
     """
     Class that should hold the information for the elevator. Currently only has the interface but in the future it should hold the stats aswell.
     """
-    def __init__(self, enc):
+    def __init__(self, id):
         super(Interface, self).__init__()
 
 
-        self.elevatorInterface = ElevatorInterfaceVis(enc, Config.instance, Config.size)
+        self.elevatorInterface = ElevatorInterfaceVis(id, VisConfig.size)
 
-        stats = self.elevatorInterface.elevatorInterface.getStats()
+        stats = self.elevatorInterface.elevatorInterface.bridge.getStats()
         self.infoPanel = InfoPanel(stats)
 
         self.hbox = QtGui.QHBoxLayout()
@@ -330,13 +310,31 @@ class Interface(QtGui.QWidget):
     def update(self, *__args):
         self.elevatorInterface.update()
         #the double elevator interface is because one if of the class that visualizes it and the other the actual class that holds the data
-        stats = self.elevatorInterface.elevatorInterface.getStats()
+
+        stats = self.elevatorInterface.elevatorInterface.bridge.getStats()
         self.infoPanel.updateStats(stats)
 
     def reset(self):
         self.elevatorInterface.reset()
-        stats = self.elevatorInterface.elevatorInterface.solver.getStats()
+        stats = self.elevatorInterface.elevatorInterface.bridge.getStats()
         self.infoPanel.updateStats(stats)
+
+class ElevatorWindow(Interface):
+    """
+    This class just creates a window for a given encoding.
+    """
+    def __init__(self, id):
+        super(ElevatorWindow, self).__init__(id)
+
+        self.id = id
+
+        self.setGeometry(VisConfig.width, VisConfig.height, VisConfig.width, VisConfig.height)
+        self.setWindowTitle("Window"+ " (" + str(self.id) + ")")
+
+        #this is here so that when multiple encodings are present the windows are not created in the same spot,
+        #they are created side by side until no more room is left. Then they are created in the same place.
+        self.move((VisConfig.width+100)*(self.id), 0)
+
 
 class InfoPanel(QtGui.QWidget):
 
@@ -380,9 +378,56 @@ class ElevatorWindow(Interface):
 
         self.id = id
 
-        self.setGeometry(Config.width, Config.height, Config.width, Config.height)
+        self.setGeometry(VisConfig.width, VisConfig.height, VisConfig.width, VisConfig.height)
         self.setWindowTitle(enc + " (" + str(self.id) + ")")
 
         #this is here so that when multiple encodings are present the windows are not created in the same spot,
         #they are created side by side until no more room is left. Then they are created in the same place.
-        self.move((Config.width+100)*(self.id-1), 0)
+        self.move((VisConfig.width+100)*(self.id-1), 0)
+
+class Connect(object):
+
+    def __init__(self, id):
+        self.instance = SolverConfig.instance
+        self.encoding = SolverConfig.encoding[id]
+        self.solver = EncodingManager.Solver(self.encoding, self.instance)
+
+        self.elevatorCount = self.solver.control.get_const("agents").number
+        self.floors = self.solver.control.get_const("floors").number
+
+    def getElevatorAmt(self):
+
+        return self.solver.control.get_const("agents").number
+
+    def getFloorAmt(self):
+
+        return self.solver.control.get_const("floors").number
+
+    def startingPosition(self, elev):
+
+        return self.solver.control.get_const("start%d" % (elev)).number
+
+    def nextMoves(self):
+
+        self.solver.callSolver()
+
+        return self.solver.lastMove
+
+    def getFullPlan(self):
+
+        return self.solver.solveFullPlan()
+
+    def getStats(self):
+
+        return self.solver.getStats()
+
+    def addRequest(self, type, params):
+
+        self.solver.addRequest(type, params)
+
+    def reset(self):
+        self.solver = EncodingManager.Solver(self.encoding, self.instance)
+
+    def getWindowAmt(self):
+
+        return SolverConfig.windows

@@ -3,12 +3,12 @@ import sys
 from PyQt4 import QtGui
 from argparse import RawTextHelpFormatter
 
-import Config
-import EncodingManager
+import SolverConfig
 from windows import MainWindow
+from windows import ElevatorWindow
 
 if __name__ == "__main__":
-    desc = "Visualizer for an Elevator domain. Configuration can be set in the Config.py file or specified with arguments\n\n" \
+    desc = "Visualizer for an Elevator domain. Configuration can be set in the VisConfig.py file or specified with arguments\n\n" \
                                                  "It loads the encoding and instance and solves it when the next action button is pressed. " \
                                                  "It then applies one action and updates the visualization to reflect that. Requests can be added at anytime.\n\n" \
                                                  "If extra strategy encodings are used they must be included with #include directive inside the main encoding. " \
@@ -20,23 +20,22 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=desc, formatter_class=RawTextHelpFormatter)
 
     parser.add_argument("-o", "--off-line", help="Solve and print the full plan without the visualizer then exit.", action="store_true")
-    parser.add_argument("-e", "--encoding", help="Encoding file name to use initially.", nargs="+", default=Config.encoding)
-    parser.add_argument("-i", "--instance", help="Instance file name to use initially.", default=Config.instance)
+    parser.add_argument("-e", "--encoding", help="Encoding file name to use initially.", nargs="+", default=SolverConfig.encoding)
+    parser.add_argument("-i", "--instance", help="Instance file name to use initially.", default=SolverConfig.instance)
 
 
     args = parser.parse_args()
 
 
-    Config.encoding = args.encoding
-    Config.instance = args.instance
+    SolverConfig.encoding = args.encoding
+    SolverConfig.instance = args.instance
 
 
     if args.off_line:
-        Config.printAtoms = False
-        for enc in Config.encoding:
-            print "Solving encoding: " + enc
-            e = EncodingManager.Solver(enc, Config.instance)
-            e.solveFullPlan()
+        for id in SolverConfig.windows:
+            print "Solving encoding"
+            bridge = ElevatorWindow.Connect(id)
+            bridge.getFullPlan()
             print "\n---Finished---\n"
     else:
         app = QtGui.QApplication(sys.argv)

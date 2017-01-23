@@ -3,7 +3,7 @@ import json
 import clingo
 
 import Checker
-import Config
+import SolverConfig
 from windows.Constants import *
 
 
@@ -13,7 +13,7 @@ class Solver():
         self.encoding = encoding
         self.instance = instance
 
-        self.control = clingo.Control(Config.options)
+        self.control = clingo.Control(SolverConfig.options)
         self.control.load(instance)
         self.control.load(encoding)
 
@@ -33,7 +33,7 @@ class Solver():
 
         # output config
         self.showStats = True
-        self.printOutput = Config.printAtoms
+        self.printOutput = SolverConfig.printAtoms
 
         # lists for externals
         self.moved = []
@@ -53,7 +53,7 @@ class Solver():
 
         self.groundStart()
 
-        self.checker = Checker.Checker(Config.checker)
+        self.checker = Checker.Checker(SolverConfig.checker)
 
 
     def get(self, val, default):
