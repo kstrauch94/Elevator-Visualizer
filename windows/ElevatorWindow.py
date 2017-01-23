@@ -369,22 +369,6 @@ class InfoPanel(QtGui.QWidget):
             self.stats[s.name].setText(s.string())
 
 
-class ElevatorWindow(Interface):
-    """
-    This class just creates a window for a given encoding.
-    """
-    def __init__(self, enc, id):
-        super(ElevatorWindow, self).__init__(enc)
-
-        self.id = id
-
-        self.setGeometry(VisConfig.width, VisConfig.height, VisConfig.width, VisConfig.height)
-        self.setWindowTitle(enc + " (" + str(self.id) + ")")
-
-        #this is here so that when multiple encodings are present the windows are not created in the same spot,
-        #they are created side by side until no more room is left. Then they are created in the same place.
-        self.move((VisConfig.width+100)*(self.id-1), 0)
-
 class Connect(object):
 
     def __init__(self, id):

@@ -2,7 +2,7 @@
 
 #list of encodings and instance
 
-encoding = ["encodings/Elevator.lp", "encodings/plan.lp"]
+encoding = ["encodings/Elevator.lp"]
 windows = len(encoding)
 
 instance = "instances/Elevatorinstance.lp"
