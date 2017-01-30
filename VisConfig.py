@@ -12,5 +12,5 @@ sideOffset = 30
 elevatorSeparation = 15
 
 #size of the elevators and floors in pixels
-size = 32
+size = 45
 

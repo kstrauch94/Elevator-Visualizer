@@ -5,7 +5,7 @@
 encoding = ["encodings/Elevator.lp"]
 windows = len(encoding)
 
-instance = "instances/Elevatorinstance.lp"
+instance = "instances/Elevatorinstance2.lp"
 
 # Checker encoding
 checker = "encodings/checker.lp"

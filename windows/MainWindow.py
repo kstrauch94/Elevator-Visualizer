@@ -43,10 +43,15 @@ class MainWindow(QtGui.QWidget):
     def prepareButtons(self):
         #creates all buttons and adds them to the Hbox
 
-        self.updateBtn = QtGui.QPushButton("Next Action", self)
-        self.updateBtn.clicked.connect(self.renew)
-        self.updateBtn.resize(self.updateBtn.sizeHint())
-        self.buttonsHbox.addWidget(self.updateBtn)
+        self.prevBtn = QtGui.QPushButton("Previous Action", self)
+        self.prevBtn.clicked.connect(self.previous)
+        self.prevBtn.resize(self.prevBtn.sizeHint())
+        self.buttonsHbox.addWidget(self.prevBtn)
+
+        self.nextBtn = QtGui.QPushButton("Next Action", self)
+        self.nextBtn.clicked.connect(self.next)
+        self.nextBtn.resize(self.nextBtn.sizeHint())
+        self.buttonsHbox.addWidget(self.nextBtn)
 
         self.callRequestBtn = QtGui.QPushButton("Add Call Request", self)
         self.callRequestBtn.clicked.connect(self.addCallRequest)
@@ -99,7 +104,7 @@ class MainWindow(QtGui.QWidget):
             for enc in self.elevatorWindows:
                 #the double elevatorInterface is because this should only be used with elevatorInterfaceVis object (the first elevatorInterface) which
                 #contains an elevatorInterface object (which is the second one) that actually will add the request to the solver
-                enc.elevatorInterface.elevatorInterface.addRequest(REQ_CALL, dir, floor)
+                enc.elevatorInterface.addRequest(REQ_CALL, dir, floor)
 
     def addDeliverRequest(self):
         """
@@ -140,16 +145,37 @@ class MainWindow(QtGui.QWidget):
             for enc in self.elevatorWindows:
                 # the double elevatorInterface is because this should only be used with elevatorInterfaceVis object (the first elevatorInterface) which
                 # contains an elevatorInterface object (which is the second one) that actually will add the request to the solver
-                enc.elevatorInterface.elevatorInterface.addRequest(REQ_DELIVER, elevator, floor)
+                enc.elevatorInterface.addRequest(REQ_DELIVER, elevator, floor)
 
-    def renew(self):
+    def next(self):
         """
-        Function is called when the "Next Action" button is pressed. It calls an update for every solver(encoding).
+        Function is called when the "Next Action"button is pressed. It calls an update for every solver(encoding).
         :return: Void
         """
-        for enc in self.elevatorWindows:
-            enc.update()
-            enc.repaint()
+        for window in self.elevatorWindows:
+            window.next()
+            window.repaint()
+
+        self.update()
+
+    def previous(self):
+        """
+        Function is called when the "Previous Action" button is pressed. It calls an update for every solver(encoding).
+        :return: Void
+        """
+        for window in self.elevatorWindows:
+            window.previous()
+            window.repaint()
+
+        self.update()
+
+    def update(self, *__args):
+
+        self.instanceInfo["Current Step"].setText("Current Step : " + str(self.elevatorWindows[0].elevatorInterface.step))
+
+        self.instanceInfo["Highest Step"].setText("Highest Step : " + str(self.elevatorWindows[0].elevatorInterface.highestStep))
+
+        self.instanceInfo["Total Plan Length"].setText("Total Plan Length : " + str(self.elevatorWindows[0].elevatorInterface.planLength))
 
     def setInterface(self):
         """
@@ -171,8 +197,19 @@ class MainWindow(QtGui.QWidget):
         text = "Elevators : " + str(self.elevatorWindows[0].elevatorInterface.elevatorCount)
         self.instanceInfo["agents"] = QtGui.QLabel(text, self)
 
+        self.instanceInfo["Current Step"] = QtGui.QLabel("Current Step : 0", self)
+
+        self.instanceInfo["Highest Step"] = QtGui.QLabel("Highest Step : 0", self)
+
+        self.instanceInfo["Total Plan Length"] = QtGui.QLabel("Total Plan Length : 0", self)
+
+
         self.ConfigInfoVbox.addWidget(self.instanceInfo["floors"])
         self.ConfigInfoVbox.addWidget(self.instanceInfo["agents"])
+        self.ConfigInfoVbox.addWidget(self.instanceInfo["Current Step"])
+        self.ConfigInfoVbox.addWidget(self.instanceInfo["Highest Step"])
+        self.ConfigInfoVbox.addWidget(self.instanceInfo["Total Plan Length"])
+
         self.ConfigInfoVbox.addStretch(1)
 
     def reset(self):
@@ -181,4 +218,5 @@ class MainWindow(QtGui.QWidget):
             enc.reset()
             enc.repaint()
 
+        self.update()
 

@@ -17,7 +17,6 @@ class Solver():
         self.control.load(instance)
         self.control.load(encoding)
 
-        self.step = 0
         self.grounded = 0
 
         #self.imin = self.get(self.control.get_const("imin"), clingo.Number(0))
@@ -135,18 +134,7 @@ class Solver():
             # get the first move and add it to the already made moves.
             if atom.arguments[-1].number == self.solvingStep:
                           #do(  elevator( number))
-                elevator = atom.arguments[0].arguments[0].number
-                action   = atom.arguments[1]
-                if action.name == "serve":
-                    actionType = SERVE
-                elif action.name == "wait":
-                    actionType = WAIT
-                elif action.arguments[0].number == 1:
-                    actionType = UP
-                elif action.arguments[0].number == -1:
-                    actionType = DOWN
-                else:
-                    print "Invalid action"
+                elevator, actionType = self.actionFilter(atom)
 
                 self.lastMove.append([elevator, actionType])
                 self.moved.append(clingo.Function("history", atom.arguments))
@@ -176,8 +164,28 @@ class Solver():
         if self.printOutput:
             self.printAtoms(model.symbols(atoms=True))
 
-    def callSolver(self):
-        print "Solving... \n" + self.encoding
+    def actionFilter(self, atom):
+        elevator = atom.arguments[0].arguments[0].number
+
+        action = atom.arguments[1]
+
+        if action.name == "serve":
+            actionType = SERVE
+        elif action.name == "wait":
+            actionType = WAIT
+        elif action.arguments[0].number == 1:
+            actionType = UP
+        elif action.arguments[0].number == -1:
+            actionType = DOWN
+        else:
+            print "Invalid action"
+
+        return elevator, actionType
+
+    def callSolver(self, step=None):
+        print "Solving... \n"
+        if step is not None and self.solved.val:
+            self.updateHistory(step)
         self.solve()
         #self.stats()
         print "Finished Solving.\n"
@@ -190,6 +198,37 @@ class Solver():
         self.solve()
         for a in self.completePlan:
             print a
+
+    def getFullPlan(self):
+        """
+        This returns the full plan as a list. Each list item is also a list that contains the elevator ID, the action and the time step
+        :return: Plan list
+        """
+
+        plan = {}
+
+        for action in self.completePlan:
+            elevator, actionType= self.actionFilter(action)
+            time = action.arguments[-1].number
+
+            if time not in plan:
+                plan[time] = []
+
+            plan[time].append([elevator, actionType])
+
+
+        return plan
+
+
+    def updateHistory(self, step):
+
+        for action in self.completePlan:
+            time =action.arguments[-1].number
+            if time > self.solvingStep and time <= step:
+                self.moved.append(clingo.Function("history", action.arguments))
+
+        self.solvingStep = step
+        self.step = step
 
     def printAtoms(self, atoms):
         # atoms is usually a list of all atoms in the model
@@ -218,7 +257,7 @@ class Solver():
 
         print goal
 
-    def addRequest(self, reqtype, params):
+    def addRequest(self, reqtype, time, params):
         """
         Create a clingo function object for the request and add it  to the request list of externals.
 
@@ -230,10 +269,7 @@ class Solver():
         if self.solvingStep == 0:
             requestTime = 1
         else:
-            requestTime = self.solvingStep
-
-
-        #requestTime = 1
+            requestTime = time
 
 
         if reqtype == REQ_CALL:
@@ -269,11 +305,7 @@ class Solver():
 
     def getStats(self):
         # order matters if being used by the InfoPanel class of the visualizer
-        return [self.currentStep,
-                self.solved,
-                self.checkErrors,
-                self.reqs,
-                self.totalSolvingTime,
+        return [self.totalSolvingTime,
                 self.totalGroundingTime]
 
 
