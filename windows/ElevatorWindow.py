@@ -196,6 +196,7 @@ class ElevatorInterfaceVis(QtGui.QWidget):
         self.setElevVis(elevatorInterface.elevatorCount, elevatorInterface.floors)
         self.updateElevators(elevatorInterface)
 
+
     def setElevVis(self, elevatorCount, floors):
         """
         Create a visualizer for every elevator in the instance and add it to the layout.
@@ -361,20 +362,23 @@ class Interface(QtGui.QWidget):
         self.elevatorInterfaceVis = ElevatorInterfaceVis(VisConfig.size)
         self.elevatorInterfaceVis.initialize(self.elevatorInterface)
 
+        self.scrollArea = QtGui.QScrollArea()
+        self.scrollArea.setWidget(self.elevatorInterfaceVis)
+        self.scrollArea.setWidgetResizable(True)
 
         stats = self.elevatorInterface.bridge.getStats()
         self.infoPanel = InfoPanel(stats)
 
         self.hbox = QtGui.QHBoxLayout()
 
-        self.hbox.addWidget(self.elevatorInterfaceVis)
+        self.hbox.addWidget(self.scrollArea)
         self.hbox.addWidget(self.infoPanel)
 
         self.setLayout(self.hbox)
 
     def update(self, *__args):
         self.elevatorInterfaceVis.updateElevators(self.elevatorInterface)
-
+        self.elevatorInterfaceVis.repaint()
         stats = self.elevatorInterface.bridge.getStats()
         self.infoPanel.updateStats(stats)
 
