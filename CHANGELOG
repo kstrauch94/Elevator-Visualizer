@@ -1,5 +1,6 @@
 V 0.3
 
+* add New previous action button on visualizer
 * add Randomization options for the instance generator
 * add Bad request error in the checker
 

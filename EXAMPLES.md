@@ -8,7 +8,7 @@ With the default configuration of the visualizer one can run the following comma
 $ python Elevator.py
 ```
 
-This pops up 2 windows. One contains 4 labeled buttons and one contains the visualization of the instance. It has 1 elevator shaft with the elevator(red square) currently sitting in the 3rd floor. Pressing the next action button moves the elevator and updates the stat display on the left side. After clicking the button a couple times, the square will eventually turn green. This means that a "serve" action was executed.
+This pops up 2 windows. One contains 5 labeled buttons and one contains the visualization of the instance. It has 1 elevator shaft with the elevator(red square) currently sitting in the 3rd floor. Pressing the next action button moves the elevator. After clicking the button a couple times, the square will eventually turn green. This means that a "serve" action was executed.
 
 Running the command
 ```
@@ -22,9 +22,9 @@ Now, using the command
 $ python Elevator.py -e encodings/Elevator.lp encodings/Elevator.lp
 ```
 
-to change the default encoding variable to now contain two encodings, the program will now spawn 3 windows. One contains the usual buttons and the other 2 contain the elevator instance visualization. We can diferentiate which is which by looking at the title of the window. One of them will be called "elevator.lp (1)" and the other "elevator.lp (2)". This is useful when there are multiple encodings that want to be executed concurrently. What happens to one instance is completely unrelated to the others. This way it is possible to visualize the different plans of the different encodings. In this case, however, the plan is the same since the encodings are the same.
+to change the default encoding variable to now contain two encodings, the program will now spawn 3 windows. One contains the usual buttons and the other 2 contain the elevator instance visualization. What happens to one instance is completely unrelated to the others. This way it is possible to visualize the different plans of the different encodings. In this case, however, the plan is the same since the encodings are the same.
 
-The clingo solver arguments can be given in the options variables in the Config.py file. Every option must be a separate item in the list. For more information on those options use the command "clingo -h".
+The clingo solver arguments can be given in the options variables in the Config.py file. Every option must be a separate item in the list. For more information on those options refer to the clingo help options and documentation.
 
 ## Checker
 

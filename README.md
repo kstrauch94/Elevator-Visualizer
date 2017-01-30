@@ -7,23 +7,17 @@ Clingo can be found at: https://potassco.org/
 
 ## Visualizer
 
-The visualizer can be configured in the Cofig.py file. The important variables are the encoding and the instances. The encoding variable must be a list with the encodings that want to be used in the visualization. These variables can also be set with command line arguments. A separate window will be created for every encoding in the list. The window will have the encoding file name in its title. The instance must be one file.
+The visualizer can be configured in the Cofig.py file. The important variables are the encoding and the instances. The encoding variable must be a list with the encodings that want to be used in the visualization. These variables can also be set with command line arguments. A separate window will be created for every encoding in the list. The instance must be one file.
 
-Any extra files can be included with the #include directive in the encoding file. The printOuput variable can be set to either "True" or "False". When it is True the following atoms for the last executed step are printed: the action execution atom, the position of the elevator(s), and the current requests. This only works if the atoms are named as in the example encoding. This information also displayed on the visualization windows.
+Any extra files can be included with the #include directive in the encoding file.
 
-The visualization has vertical rectangle divided into squares as the elevator shaft. The elevator is a red square. The last action performed is visualized below by either an arrow or a rectangle. An "N" is displayed if there no action was taken. To the right there are several stats about the last solved call such as the current time step.
+The visualization has vertical rectangle divided into squares as the elevator shaft. The elevator is a red square. The last action performed is visualized below by either an arrow or a rectangle. An "N" is displayed if no action was taken. To the right there are stats about the last solved call such as the solving time.
 
 It is also possible to just solve the instance with the encodings provided in the Config.py file or by arguments, and print the full plan without visualizing by using the -o command.
 
 ```
 $ python Elevator.py -o
 ```
-
-#### Buttons
-
-The visualizer has buttons to solve and apply the next action, add new requests, and to reset. After every solve call the found plan is tested and an output is given that reports any errors that were found.
-
-The "Next Action" button solves the instance. On repeated clicks it remembers the past actions and keeps them in the plan. The "add call request" button takes as parameters a direction(either "up" or "down") and a destination floor, e.g "up,5". This request is added to the solver and taken into account on the next click of the "Next Action" button. Similarly, the "add deliver request" button takes as parameters an elevator and a destination, e.g. 1,5 (elevator 1 goes to floor 5). This request is also taken into account on the next click of the "Next Action" button.
 
 ## Encoding and Instance specification
 
@@ -68,5 +62,6 @@ isabovemax  : The elevator is is above the highest floor.
 multactions : The elevator executed more than one action at the same time point.
 longmove    : The elevator moved more than 1 floor in one time point.
 clone       : An elevator is at multiple places at once.
+
 badreq      : A request directed to a floor that doesnt exist or a deliver request directed to an elevator that doesn't exist.
 ```
