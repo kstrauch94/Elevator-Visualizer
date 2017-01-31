@@ -3,6 +3,9 @@ V 0.3
 * add New previous action button on visualizer
 * add Randomization options for the instance generator
 * add Bad request error in the checker
+* add Instance visualization has now a scrollbar
+* add Menu bar
+	* can now load encoding and instance from the program
 
 V 0.2
 
