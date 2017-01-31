@@ -26,6 +26,7 @@ class Solver():
         self.elevAmt = self.control.get_const("agents").number
 
         self.step, self.ret = 1, None
+        self.solved = False
 
         self.grounded = 0
         self.solvingStep = 0
@@ -45,9 +46,7 @@ class Solver():
 
         self.totalSolvingTime = Stat(name = "Total Solving Time", val = 0)
         self.totalGroundingTime = Stat(name = "Total Grounding Time", val = 0)
-        self.currentStep = Stat(name="Current Step", val = 0)
         self.checkErrors = CheckerStat(name="Checker Status")
-        self.solved = Stat(name="Last Step Solved", val=False)
         self.reqs = RequestStat(name="Current Requests")
 
         self.groundStart()
@@ -67,7 +66,7 @@ class Solver():
 
     def solve(self):
 
-        self.solved.val = False
+        self.solved = False
 
         self.ret = None
         self.lastMove = None
@@ -112,8 +111,7 @@ class Solver():
         self.step = self.solvingStep
 
         # update stat recording of the current step and stat var for the solving status is made true
-        self.currentStep.val = self.solvingStep
-        self.solved.val = True
+        self.solved = True
 
         # check model
         # convert shown atoms into a list of strings
@@ -123,7 +121,6 @@ class Solver():
         ####
         # look for the last action to perform and add it to moved and lastmove
         ####
-        actionFound = False
         self.lastMove = []
         self.completePlan = []
 
@@ -157,7 +154,7 @@ class Solver():
         self.reqs.val = []
         for atom in model.symbols(atoms=True):
             if atom.name == "holds":
-                if atom.arguments[0].name == "request" and atom.arguments[-1].number == self.solvingStep:
+                if atom.arguments[0].name == "request":
                     self.reqs.val.append(atom)
 
 
@@ -184,7 +181,7 @@ class Solver():
 
     def callSolver(self, step=None):
         print "Solving... \n"
-        if step is not None and self.solved.val:
+        if step is not None and self.solved:
             self.updateHistory(step)
         self.solve()
         #self.stats()
@@ -223,7 +220,7 @@ class Solver():
     def updateHistory(self, step):
 
         for action in self.completePlan:
-            time =action.arguments[-1].number
+            time = action.arguments[-1].number
             if time > self.solvingStep and time <= step:
                 self.moved.append(clingo.Function("history", action.arguments))
 
@@ -303,10 +300,34 @@ class Solver():
                 print "ground: ", ground
 
 
+    def getRequestInfo(self):
+        reqs = {}
+
+        for req in self.reqs.val:
+            time = req.arguments[-1].number
+
+            reqatom = req.arguments[0]
+            reqtype = str(reqatom.arguments[0])
+            dest = str(reqatom.arguments[1])
+
+            if time not in reqs:
+                reqs[time] = []
+
+            if reqtype[:4] == "call":
+                middle = " from "
+            else:
+                middle = " to "
+
+            string = reqtype + middle + dest
+            reqs[time].append(string)
+
+        return reqs
+
     def getStats(self):
         # order matters if being used by the InfoPanel class of the visualizer
         return [self.totalSolvingTime,
-                self.totalGroundingTime]
+                self.totalGroundingTime,
+                self.checkErrors]
 
 
 class Stat(object):

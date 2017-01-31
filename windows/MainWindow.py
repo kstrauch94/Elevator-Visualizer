@@ -207,6 +207,8 @@ class MainWindow(QtGui.QWidget):
 
         self.instanceInfo["Total Plan Length"].setText("Total Plan Length : " + str(self.elevatorWindow.elevatorInterface.planLength))
 
+        self.instanceInfo["Current Requests"].setText("Current Requests : " + str(self.elevatorWindow.elevatorInterface.currentRequests))
+
     def setInterface(self):
         """
         Creates a window for every encoding. It also extracts the floor and agent amounts and stores them.
@@ -229,12 +231,15 @@ class MainWindow(QtGui.QWidget):
 
         self.instanceInfo["Total Plan Length"] = QtGui.QLabel("Total Plan Length : 0", self)
 
+        self.instanceInfo["Current Requests"] = QtGui.QLabel("Current Requests : No Requests", self)
+
 
         self.ConfigInfoVbox.addWidget(self.instanceInfo["floors"])
         self.ConfigInfoVbox.addWidget(self.instanceInfo["agents"])
         self.ConfigInfoVbox.addWidget(self.instanceInfo["Current Step"])
         self.ConfigInfoVbox.addWidget(self.instanceInfo["Highest Step"])
         self.ConfigInfoVbox.addWidget(self.instanceInfo["Total Plan Length"])
+        self.ConfigInfoVbox.addWidget(self.instanceInfo["Current Requests"])
 
         self.ConfigInfoVbox.addStretch(1)
 

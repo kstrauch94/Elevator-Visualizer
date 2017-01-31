@@ -253,6 +253,7 @@ class ElevatorInterface():
         self.setElevators()
 
         self.completePlan = None
+        self.requestInfo = None
 
         self.hasToSolve = True
 
@@ -318,9 +319,16 @@ class ElevatorInterface():
 
     def solve(self):
         self.plan = self.bridge.nextMoves(self.highestStep)
-
         self.planLength = len(self.plan)
 
+        self.requestInfo = self.bridge.getRequests()
+
+    @property
+    def currentRequests(self):
+        try:
+            return self.requestInfo[self.step]
+        except (TypeError, KeyError):
+            return "No requests"
 
     def addRequest(self, type, *params):
         self.hasToSolve = True
@@ -482,6 +490,10 @@ class Connect(object):
 
         return self.solver.getStats()
 
+    def getRequests(self):
+
+        return self.solver.getRequestInfo()
+
     def addRequest(self, type, time, params):
 
         self.solver.addRequest(type, time, params)
@@ -491,7 +503,3 @@ class Connect(object):
 
         self.elevatorCount = self.solver.control.get_const("agents").number
         self.floors = self.solver.control.get_const("floors").number
-
-    def getWindowAmt(self):
-
-        return SolverConfig.windows
