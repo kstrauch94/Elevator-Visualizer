@@ -20,6 +20,11 @@ class MainWindow(QtGui.QWidget):
 
         self.mainVbox = QtGui.QVBoxLayout() #will contain button HBox and another Hbox which contains Elevator Hbox and info Box
 
+        self.menuBar = QtGui.QMenuBar()
+        self.menuBar.setNativeMenuBar(False)
+        self.prepareMenuBar()
+
+
         self.buttonsHbox = QtGui.QHBoxLayout() #HBox for the buttons
         self.buttonsHbox.setAlignment(QtCore.Qt.AlignLeft)
 
@@ -32,12 +37,45 @@ class MainWindow(QtGui.QWidget):
 
         self.prepareButtons()
 
+        self.mainVbox.addWidget(self.menuBar)
         self.mainVbox.addLayout(self.buttonsHbox)
         self.mainVbox.addLayout(self.ConfigInfoVbox)
 
         self.setLayout(self.mainVbox)
 
         self.show()
+
+
+    def prepareMenuBar(self):
+
+        loadMenu = self.menuBar.addMenu("Load")
+        loadInstanceAction = QtGui.QAction("Load Instance", self)
+        loadInstanceAction.triggered.connect(self.loadInstance)
+        loadMenu.addAction(loadInstanceAction)
+
+        loadEncodingAction = QtGui.QAction("Load Encoding", self)
+        loadEncodingAction.triggered.connect(self.loadEncoding)
+        loadMenu.addAction(loadEncodingAction)
+
+
+    def loadInstance(self):
+
+        dialog = QtGui.QFileDialog()
+        instance = str(dialog.getOpenFileName())
+
+        if instance != "":
+            self.elevatorWindow.elevatorInterface.bridge.instance = instance
+            self.reset()
+
+    def loadEncoding(self):
+
+        dialog = QtGui.QFileDialog()
+        encoding = str(dialog.getOpenFileName())
+
+        if encoding != "":
+            self.elevatorWindow.elevatorInterface.bridge.encoding = encoding
+            self.reset()
+
 
 
     def prepareButtons(self):
@@ -101,10 +139,7 @@ class MainWindow(QtGui.QWidget):
                 print "Floor must be within range."
                 return
 
-            for enc in self.elevatorWindows:
-                #the double elevatorInterface is because this should only be used with elevatorInterfaceVis object (the first elevatorInterface) which
-                #contains an elevatorInterface object (which is the second one) that actually will add the request to the solver
-                enc.elevatorInterface.addRequest(REQ_CALL, dir, floor)
+            self.elevatorWindow.elevatorInterface.addRequest(REQ_CALL, dir, floor)
 
     def addDeliverRequest(self):
         """
@@ -142,19 +177,15 @@ class MainWindow(QtGui.QWidget):
                 print "Floor must be within range."
                 return
 
-            for enc in self.elevatorWindows:
-                # the double elevatorInterface is because this should only be used with elevatorInterfaceVis object (the first elevatorInterface) which
-                # contains an elevatorInterface object (which is the second one) that actually will add the request to the solver
-                enc.elevatorInterface.addRequest(REQ_DELIVER, elevator, floor)
+            self.elevatorWindow.elevatorInterface.addRequest(REQ_DELIVER, elevator, floor)
 
     def next(self):
         """
         Function is called when the "Next Action"button is pressed. It calls an update for every solver(encoding).
         :return: Void
         """
-        for window in self.elevatorWindows:
-            window.next()
-            window.repaint()
+        self.elevatorWindow.next()
+        self.elevatorWindow.repaint()
 
         self.update()
 
@@ -163,19 +194,18 @@ class MainWindow(QtGui.QWidget):
         Function is called when the "Previous Action" button is pressed. It calls an update for every solver(encoding).
         :return: Void
         """
-        for window in self.elevatorWindows:
-            window.previous()
-            window.repaint()
+        self.elevatorWindow.previous()
+        self.elevatorWindow.repaint()
 
         self.update()
 
     def update(self, *__args):
 
-        self.instanceInfo["Current Step"].setText("Current Step : " + str(self.elevatorWindows[0].elevatorInterface.step))
+        self.instanceInfo["Current Step"].setText("Current Step : " + str(self.elevatorWindow.elevatorInterface.step))
 
-        self.instanceInfo["Highest Step"].setText("Highest Step : " + str(self.elevatorWindows[0].elevatorInterface.highestStep))
+        self.instanceInfo["Highest Step"].setText("Highest Step : " + str(self.elevatorWindow.elevatorInterface.highestStep))
 
-        self.instanceInfo["Total Plan Length"].setText("Total Plan Length : " + str(self.elevatorWindows[0].elevatorInterface.planLength))
+        self.instanceInfo["Total Plan Length"].setText("Total Plan Length : " + str(self.elevatorWindow.elevatorInterface.planLength))
 
     def setInterface(self):
         """
@@ -183,18 +213,14 @@ class MainWindow(QtGui.QWidget):
         :return: Void
         """
         # This list contains the reference to all the created windows for the encodings
-        self.elevatorWindows = []
+        self.elevatorWindow = ElevatorWindow.ElevatorWindow()
+        self.elevatorWindow.show()
 
 
-        for id in range(SolverConfig.windows):
-            self.elevatorWindows.append(ElevatorWindow.ElevatorWindow(id))
-            self.elevatorWindows[-1].show()
-
-
-        text = "floors : " + str(self.elevatorWindows[0].elevatorInterface.floors)
+        text = "floors : " + str(self.elevatorWindow.elevatorInterface.floors)
         self.instanceInfo["floors"] = QtGui.QLabel(text, self)
 
-        text = "Elevators : " + str(self.elevatorWindows[0].elevatorInterface.elevatorCount)
+        text = "Elevators : " + str(self.elevatorWindow.elevatorInterface.elevatorCount)
         self.instanceInfo["agents"] = QtGui.QLabel(text, self)
 
         self.instanceInfo["Current Step"] = QtGui.QLabel("Current Step : 0", self)
@@ -214,9 +240,8 @@ class MainWindow(QtGui.QWidget):
 
     def reset(self):
 
-        for enc in self.elevatorWindows:
-            enc.reset()
-            enc.repaint()
+        self.elevatorWindow.reset()
+        self.elevatorWindow.repaint()
 
         self.update()
 

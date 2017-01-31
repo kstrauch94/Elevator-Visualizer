@@ -235,13 +235,13 @@ class ElevatorInterface():
     """
     Data class for the whole instance. Keeps track of every individual elevator.
     """
-    def __init__(self, id):
+    def __init__(self):
         """
         Parameters usually in the VisConfig.py file
         :param id : id of the solver to be used.
         """
 
-        self.bridge = Connect(id)
+        self.bridge = Connect()
 
         self.elevatorCount = self.bridge.getElevatorAmt()
         self.floors = self.bridge.getFloorAmt()
@@ -342,6 +342,8 @@ class ElevatorInterface():
         It also creates the elevetor object again.
         """
         self.bridge.reset()
+        self.elevatorCount = self.bridge.getElevatorAmt()
+        self.floors = self.bridge.getFloorAmt()
         self.step = 0
         self.highestStep = 0
         self.planLength = 0
@@ -355,10 +357,10 @@ class Interface(QtGui.QWidget):
     """
     Class that should hold the information for the elevator. Currently only has the interface but in the future it should hold the stats aswell.
     """
-    def __init__(self, id):
+    def __init__(self):
         super(Interface, self).__init__()
 
-        self.elevatorInterface = ElevatorInterface(id)
+        self.elevatorInterface = ElevatorInterface()
         self.elevatorInterfaceVis = ElevatorInterfaceVis(VisConfig.size)
         self.elevatorInterfaceVis.initialize(self.elevatorInterface)
 
@@ -403,17 +405,12 @@ class ElevatorWindow(Interface):
     """
     This class just creates a window for a given encoding.
     """
-    def __init__(self, id):
-        super(ElevatorWindow, self).__init__(id)
-
-        self.id = id
+    def __init__(self):
+        super(ElevatorWindow, self).__init__()
 
         self.setGeometry(VisConfig.width, VisConfig.height, VisConfig.width, VisConfig.height)
-        self.setWindowTitle("Window"+ " (" + str(self.id) + ")")
-
-        #this is here so that when multiple encodings are present the windows are not created in the same spot,
-        #they are created side by side until no more room is left. Then they are created in the same place.
-        self.move((VisConfig.width+100)*(self.id), 0)
+        self.setWindowTitle("Instance")
+        self.move(0, 0)
 
 
 class InfoPanel(QtGui.QWidget):
@@ -451,9 +448,9 @@ class InfoPanel(QtGui.QWidget):
 
 class Connect(object):
 
-    def __init__(self, id):
+    def __init__(self):
         self.instance = SolverConfig.instance
-        self.encoding = SolverConfig.encoding[id]
+        self.encoding = SolverConfig.encoding
         self.solver = EncodingManager.Solver(self.encoding, self.instance)
 
         self.elevatorCount = self.solver.control.get_const("agents").number
@@ -491,6 +488,9 @@ class Connect(object):
 
     def reset(self):
         self.solver = EncodingManager.Solver(self.encoding, self.instance)
+
+        self.elevatorCount = self.solver.control.get_const("agents").number
+        self.floors = self.solver.control.get_const("floors").number
 
     def getWindowAmt(self):
 
