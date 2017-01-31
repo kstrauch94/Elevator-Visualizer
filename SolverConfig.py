@@ -2,8 +2,7 @@
 
 #list of encodings and instance
 
-encoding = ["encodings/Elevator.lp"]
-windows = len(encoding)
+encoding = "encodings/Elevator.lp"
 
 instance = "instances/Elevatorinstance2.lp"
 
