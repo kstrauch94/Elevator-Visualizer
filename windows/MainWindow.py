@@ -1,7 +1,7 @@
 from PyQt4 import QtGui, QtCore
 
 import VisConfig, SolverConfig
-import ElevatorWindow
+import ElevatorWindow, Widgets
 from Constants import *
 
 
@@ -108,76 +108,24 @@ class MainWindow(QtGui.QWidget):
 
 
     def addCallRequest(self):
-        """
-        Function called after pressing the "add call request" button. The input in the dialog is the direction("up" or "down")
-        and the destination floor(an int). The input is stripped of whitespace and separated by comma.
-        :return: Void
-        """
 
-        req, ok = QtGui.QInputDialog.getText(self, 'Request',
-                                              'Call Request Parameters(direction, floor):')
+        floors = self.elevatorWindow.elevatorInterface.floors
 
+        ok, type, floor = Widgets.CallRequestDialog.getRequest(floors, self)
 
         if ok:
-
-            req = str(req).strip().split(",")
-            dir = str(req[0]).lower()
-
-            if dir != UPDIR and dir != DOWNDIR:
-                print "Direction must be up or down"
-                return
-
-
-            try:
-                floor = int(req[1])
-
-            except ValueError:
-                print "Floor must be an integer."
-                return
-
-            if floor < 1 or floor > self.instanceInfo["floors"]:
-                print "Floor must be within range."
-                return
-
-            self.elevatorWindow.elevatorInterface.addRequest(REQ_CALL, dir, floor)
+            self.elevatorWindow.elevatorInterface.addRequest(REQ_CALL, type, floor)
 
     def addDeliverRequest(self):
-        """
-        Function called after pressing the "add deliver request" button. The input in the dialog is the elevator id(an integer)
-        and the destination floor(an int). The input is stripped of whitespace and separated by comma.
-        :return: Void
-        """
-        req, ok = QtGui.QInputDialog.getText(self, 'Request',
-                                             'Call Request Parameters(Elevator, floor):')
+
+        floors = self.elevatorWindow.elevatorInterface.floors
+        elevs = self.elevatorWindow.elevatorInterface.elevatorCount
+
+        ok, elev, floor = Widgets.DeliverRequestDialog.getRequest(floors, elevs, self)
 
         if ok:
-            req = str(req)
-            req = req.strip().split(",")
-            try:
-                elevator = int(req[0])
+            self.elevatorWindow.elevatorInterface.addRequest(REQ_DELIVER, elev, floor)
 
-            except ValueError:
-                print "Elevator must be an integer."
-                return
-
-            if elevator > self.instanceInfo["agents"]:
-                print "Elevator number must be within range"
-                return
-            elif elevator < 1:
-                print "Elevator number must be a positive integer"
-                return
-            try:
-                floor = int(req[1])
-
-            except ValueError:
-                print "Floor must be an integer."
-                return
-
-            if floor < 1 or floor > self.instanceInfo["floors"]:
-                print "Floor must be within range."
-                return
-
-            self.elevatorWindow.elevatorInterface.addRequest(REQ_DELIVER, elevator, floor)
 
     def next(self):
         """
