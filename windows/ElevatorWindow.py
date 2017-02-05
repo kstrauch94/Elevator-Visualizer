@@ -255,6 +255,8 @@ class ElevatorInterface():
         self.completePlan = None
         self.requestInfo = None
 
+        self.requestsServed = None
+
         self.hasToSolve = True
 
     def setElevators(self):
@@ -322,6 +324,29 @@ class ElevatorInterface():
         self.planLength = len(self.plan)
 
         self.requestInfo = self.bridge.getRequests()
+        self.parseRequests()
+
+    def parseRequests(self):
+
+        self.requestsServed = self.requestInfo.copy()
+
+        for time in self.requestInfo:
+            completed = []
+            if time+1 in self.requestInfo:
+                for req in self.requestInfo[time]:
+                    if req not in self.requestInfo[time+1]:
+                        completed.append(req)
+            else:
+                for req in self.requestInfo[time]:
+                    completed.append(req)
+
+            self.requestsServed[time+1] = completed
+
+        self.requestsServed[0] = []
+
+    @property
+    def requestCompleted(self):
+        return self.requestsServed[self.step]
 
     @property
     def currentRequests(self):
@@ -386,7 +411,7 @@ class Interface(QtGui.QWidget):
 
         self.setLayout(self.hbox)
 
-    def update(self, *__args):
+    def updateAll(self):
         self.elevatorInterfaceVis.updateElevators(self.elevatorInterface)
         self.elevatorInterfaceVis.repaint()
         stats = self.elevatorInterface.bridge.getStats()
@@ -394,11 +419,11 @@ class Interface(QtGui.QWidget):
 
     def next(self):
         self.elevatorInterface.next()
-        self.update()
+        self.updateAll()
 
     def previous(self):
         self.elevatorInterface.previous()
-        self.update()
+        self.updateAll()
 
     def reset(self):
         self.elevatorInterface.reset()

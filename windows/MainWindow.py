@@ -135,7 +135,7 @@ class MainWindow(QtGui.QWidget):
         self.elevatorWindow.next()
         self.elevatorWindow.repaint()
 
-        self.update()
+        self.updateInfo()
 
     def previous(self):
         """
@@ -145,9 +145,9 @@ class MainWindow(QtGui.QWidget):
         self.elevatorWindow.previous()
         self.elevatorWindow.repaint()
 
-        self.update()
+        self.updateInfo()
 
-    def update(self, *__args):
+    def updateInfo(self, *__args):
 
         self.instanceInfo["Current Step"].setText("Current Step : " + str(self.elevatorWindow.elevatorInterface.step))
 
@@ -156,6 +156,8 @@ class MainWindow(QtGui.QWidget):
         self.instanceInfo["Total Plan Length"].setText("Total Plan Length : " + str(self.elevatorWindow.elevatorInterface.planLength))
 
         self.instanceInfo["Current Requests"].setText("Current Requests : " + str(self.elevatorWindow.elevatorInterface.currentRequests))
+
+        self.instanceInfo["Requests Completed"].setText("Requests Completed : " + str(self.elevatorWindow.elevatorInterface.requestCompleted))
 
     def setInterface(self):
         """
@@ -181,6 +183,9 @@ class MainWindow(QtGui.QWidget):
 
         self.instanceInfo["Current Requests"] = QtGui.QLabel("Current Requests : No Requests", self)
 
+        self.instanceInfo["Requests Completed"] = QtGui.QLabel("Requests Completed : No Requests", self)
+
+
 
         self.ConfigInfoVbox.addWidget(self.instanceInfo["floors"])
         self.ConfigInfoVbox.addWidget(self.instanceInfo["agents"])
@@ -188,6 +193,7 @@ class MainWindow(QtGui.QWidget):
         self.ConfigInfoVbox.addWidget(self.instanceInfo["Highest Step"])
         self.ConfigInfoVbox.addWidget(self.instanceInfo["Total Plan Length"])
         self.ConfigInfoVbox.addWidget(self.instanceInfo["Current Requests"])
+        self.ConfigInfoVbox.addWidget(self.instanceInfo["Requests Completed"])
 
         self.ConfigInfoVbox.addStretch(1)
 
@@ -196,5 +202,5 @@ class MainWindow(QtGui.QWidget):
         self.elevatorWindow.reset()
         self.elevatorWindow.repaint()
 
-        self.update()
+        self.updateInfo()
 
