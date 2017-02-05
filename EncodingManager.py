@@ -55,7 +55,11 @@ class Solver():
 
 
     def groundStart(self):
-        # have to call this if something is to be added at time 0, E.G requests
+        """
+        Have to call this if something is to be added at time 0, E.G requests
+        :return: void
+        """
+
         if self.grounded == 0 and self.step == 1:
             self.control.ground([("base", []), ("init", []), ("step", [self.step]), ("check", [self.step])])
             self.grounded = 1
