@@ -31,10 +31,6 @@ class Solver():
         self.grounded = 0
         self.solvingStep = 0
 
-        # output config
-        self.showStats = True
-        self.printOutput = SolverConfig.printAtoms
-
         # lists for externals
         self.moved = []
         self.newRequests = []
@@ -105,6 +101,7 @@ class Solver():
             self.step = self.step + 1
 
     def on_model(self, model):
+
         print "Model found\n"
         #increase solving step and set the step var to this value so that on the next solve call it starts solving there.
         self.solvingStep += 1
@@ -114,42 +111,15 @@ class Solver():
         self.solved = True
 
         # check model
-        # convert shown atoms into a list of strings
+        # convert shown atoms (which should be the actions) into a list of strings
         self.checker.checkList(self.instance, [a.__str__() for a in model.symbols(shown = True)])
         self.checkErrors.val = self.checker.shownAtoms
 
-        ####
-        # look for the last action to perform and add it to moved and lastmove
-        ####
-        self.lastMove = []
+
         self.completePlan = []
-
-        #elevs has the id of the elevators
-        elevs = range(1, self.elevAmt+1)
-
         for atom in model.symbols(shown = True):
-            # get the first move and add it to the already made moves.
-            if atom.arguments[-1].number == self.solvingStep:
-                          #do(  elevator( number))
-                elevator, actionType = self.actionFilter(atom)
-
-                self.lastMove.append([elevator, actionType])
-                self.moved.append(clingo.Function("history", atom.arguments))
-
-                elevs.remove(elevator)
-
             if atom.name == "do":
                 self.completePlan.append(atom)
-
-        #pass None as action to elevator without one
-        for e in elevs:
-            self.lastMove.append([e, NONEACT])
-
-
-        # at this point elevs holds all elevators without actions
-        if len(elevs) != 0:
-            print "No action was found for at least one elevator in step " + str(self.solvingStep) + ". This might create problems on the next solve call."
-
 
         self.reqs.val = []
         for atom in model.symbols(atoms=True):
@@ -158,10 +128,15 @@ class Solver():
                     self.reqs.val.append(atom)
 
 
-        if self.printOutput:
+        if SolverConfig.printAtoms:
             self.printAtoms(model.symbols(atoms=True))
 
     def actionFilter(self, atom):
+        """
+        Filters an action atom of the form do(E,A,T) and return the elevator number and action type
+        :param atom: Action atom do(E,A,T)
+        :return: elevator number, action type
+        """
         elevator = atom.arguments[0].arguments[0].number
 
         action = atom.arguments[1]
@@ -180,6 +155,11 @@ class Solver():
         return elevator, actionType
 
     def callSolver(self, step=None):
+        """
+        This is the main call to the solver. Parameter step is used for solve calls after the first one.
+        :param step: Must be the amount of steps that were already executed. Adds the action up to this number to the history. Leave as None for the first call.
+        :return: void
+        """
         print "Solving... \n"
         if step is not None and self.solved:
             self.updateHistory(step)
@@ -198,8 +178,8 @@ class Solver():
 
     def getFullPlan(self):
         """
-        This returns the full plan as a list. Each list item is also a list that contains the elevator ID, the action and the time step
-        :return: Plan list
+        This returns the full plan as a dictionary. Each key is the time step. The value of the key is a list of lists that contain the elevator ID and the action
+        :return: Plan dictionary
         """
 
         plan = {}
@@ -218,23 +198,24 @@ class Solver():
 
 
     def updateHistory(self, step):
+        """
+        Updates the History of actions that will be added to the solver as externals
+        :param step: The last time step where actions will be added
+        :return: void
+        """
 
         for action in self.completePlan:
             time = action.arguments[-1].number
-            if time > self.solvingStep and time <= step:
+            if time >= self.solvingStep and time <= step:
                 self.moved.append(clingo.Function("history", action.arguments))
 
         self.solvingStep = step
         self.step = step
 
     def printAtoms(self, atoms):
+        # This is mostly for debugging encoding
         # atoms is usually a list of all atoms in the model
-        # use model.symbols(atoms=True) as parameter inside the onmodel function to give the full atom list
-
-        #######
-        # use this function just for printing atoms
-        #######
-
+        # use model.symbols(atoms=True) as parameter inside the on_model function to give the full atom list
         goal = None
 
         for atom in atoms:
@@ -259,6 +240,7 @@ class Solver():
         Create a clingo function object for the request and add it  to the request list of externals.
 
         :param reqtype: either call or deliver, it should be as the ones defined in the Constants.py file.
+        :param time: time at which the request is added
         :param params: parameters of the request. Differs depending on the type. Either direction and destination for CALL requests
                        or elevator ID and destination for DELIVER requests
         :return: void
@@ -275,11 +257,14 @@ class Solver():
         if reqtype == REQ_DELIVER:
             request = clingo.Function("deliverrequest", [params[0], params[1], requestTime])
 
-        print request
+        print "Request " + str(request) + " has been added."
         self.newRequests.append(request)
 
-    def stats(self, printstats = False):
-
+    def stats(self):
+        """
+        Update the stats. Called after each solver call.
+        :return: void
+        """
         statistics = json.loads(json.dumps(self.control.statistics, sort_keys=True, indent=4, separators=(',', ': ')))
 
         solve = statistics["summary"]["time_solve"]
@@ -291,16 +276,13 @@ class Solver():
         self.totalGroundingTime.val += float(ground)
 
 
-        if printstats:
-            #print stats for current step
-            print self.ret
-            if self.showStats == True:
-                print "step: ", self.step
-                print "solve: ", solve
-                print "ground: ", ground
-
 
     def getRequestInfo(self):
+        """
+        Returns the requests as a dictionary similarly to the getFullPlan function.
+        Each key is the time point with the value being a list containing the requests as strings
+        :return: Request as a dictionary
+        """
         reqs = {}
 
         for req in self.reqs.val:
