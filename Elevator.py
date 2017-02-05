@@ -32,11 +32,10 @@ if __name__ == "__main__":
 
 
     if args.off_line:
-        for id in range(SolverConfig.windows):
-            print "Solving encoding"
-            bridge = ElevatorWindow.Connect(id)
-            bridge.solveFullPlan()
-            print "\n---Finished---\n"
+        print "Solving encoding"
+        bridge = ElevatorWindow.Connect()
+        bridge.solveFullPlan()
+        print "\n---Finished---\n"
     else:
         app = QtGui.QApplication(sys.argv)
         gui = MainWindow.MainWindow()
