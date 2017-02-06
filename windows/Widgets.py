@@ -3,6 +3,8 @@ from functools import partial
 
 from math import ceil
 
+import os
+
 import Constants
 
 class CallRequestDialog(QtGui.QDialog):
@@ -173,3 +175,114 @@ class DeliverRequestDialog(QtGui.QDialog):
         result = dialog.exec_()
 
         return (result == QtGui.QDialog.Accepted, dialog.elevator, dialog.floor)
+
+class RequestsWindow(QtGui.QWidget):
+
+    def __init__(self):
+        super(RequestsWindow, self).__init__()
+        self.setWindowTitle("Requests")
+
+        self.served = {}
+        self.added = {}
+
+        self.vbox = QtGui.QVBoxLayout()
+
+        self.headerServed = QtGui.QLabel("No Requests Served")
+        self.servedVBox = QtGui.QVBoxLayout()
+        self.servedVBox.addWidget(self.headerServed)
+
+        self.headerAdded = QtGui.QLabel("No Requests Added")
+        self.addedVBox = QtGui.QVBoxLayout()
+        self.addedVBox.addWidget(self.headerAdded)
+
+        self.vbox.addLayout(self.servedVBox)
+        self.vbox.addLayout(self.addedVBox)
+
+        self.setLayout(self.vbox)
+
+    def setRequests(self, served, added):
+
+        for time in served:
+            if served[time] != []:
+                string = "In step " + str(time) + " : " + ", ".join(served[time])
+                if time not in self.served:
+                    label = QtGui.QLabel(string, self)
+                    self.served[time] = label
+                    self.servedVBox.addWidget(label)
+                else:
+                    self.served[time].setText(string)
+
+
+        for time in added:
+            string = "In step " + str(time) + " : " + ",  ".join(added[time])
+            if time not in self.added:
+                label = QtGui.QLabel(string, self)
+                self.added[time] = label
+                self.addedVBox.addWidget(label)
+            else:
+                self.added[time].setText(string)
+
+        if self.served != {}:
+            self.headerServed.setText("Served Requests: ")
+
+        if self.added != {}:
+            self.headerAdded.setText("Added Requests: ")
+
+
+class PlanWindow(QtGui.QWidget):
+
+    def __init__(self):
+        super(PlanWindow, self).__init__()
+        self.setWindowTitle("Plan")
+
+        # images for the actions
+        self.actionpic = QtGui.QLabel(self)
+        # images
+        self.imagedict = {}
+        self.imagedict[Constants.UP] = QtGui.QPixmap(os.getcwd() + "/res/uparrow.png")
+        self.imagedict[Constants.DOWN] = QtGui.QPixmap(os.getcwd() + "/res/downarrow.png")
+        self.imagedict[Constants.WAIT] = QtGui.QPixmap(os.getcwd() + "/res/stay.png")
+        self.imagedict[Constants.SERVE] = QtGui.QPixmap(os.getcwd() + "/res/stay.png")
+        self.imagedict[Constants.NONEACT] = QtGui.QPixmap(os.getcwd() + "/res/none.png")
+
+        self.vbox = QtGui.QVBoxLayout()
+
+        self.elevatorHBox = QtGui.QHBoxLayout()
+
+        self.elevatorVBoxDict = {}
+        self.elevatorActionDict = {}
+
+        self.vbox.addLayout(self.elevatorHBox)
+
+        self.setLayout(self.vbox)
+
+    def setPlan(self, plan):
+
+        if self.elevatorHBox.count() == 0:
+            for i in range(len(plan[1])):
+                vbox = QtGui.QVBoxLayout()
+                label = QtGui.QLabel("Elev " + str(i+1))
+                vbox.addWidget(label)
+
+                self.elevatorActionDict[i+1] = {}
+
+                self.elevatorVBoxDict[i+1] = vbox
+                self.elevatorHBox.addLayout(vbox)
+
+        for time in plan:
+            for move in plan[time]:
+                elev = move[0]
+                action = move[1]
+
+                if time not in self.elevatorActionDict[elev]:
+                    label = QtGui.QLabel(self)
+                    label.setPixmap(self.imagedict[action])
+                    self.elevatorActionDict[elev][time] = label
+                    self.elevatorVBoxDict[elev].addWidget(label)
+
+                else:
+                    self.elevatorActionDict[elev][time].setPixmap(self.imagedict[action])
+
+
+
+

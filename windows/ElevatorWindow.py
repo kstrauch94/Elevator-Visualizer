@@ -252,8 +252,9 @@ class ElevatorInterface():
 
         self.setElevators()
 
-        self.completePlan = None
+        self.plan = None
         self.requestInfo = None
+        self.addedRequests = {}
 
         self.requestsServed = None
 
@@ -324,6 +325,7 @@ class ElevatorInterface():
         self.planLength = len(self.plan)
 
         self.requestInfo = self.bridge.getRequests()
+        self.addedRequests[0] = self.requestInfo[0]
         self.parseRequests()
 
     def parseRequests(self):
@@ -346,18 +348,32 @@ class ElevatorInterface():
 
     @property
     def requestCompleted(self):
-        return self.requestsServed[self.step]
+        try:
+            return ", ".join(self.requestsServed[self.step])
+        except (TypeError, KeyError):
+            return "No Requests"
 
     @property
     def currentRequests(self):
         try:
-            return self.requestInfo[self.step]
+            return ", ".join(self.requestInfo[self.step])
         except (TypeError, KeyError):
-            return "No requests"
+            return "No Requests"
+
 
     def addRequest(self, type, *params):
         self.hasToSolve = True
         self.bridge.addRequest(type, self.highestStep, params)
+
+        if type == REQ_CALL:
+            string = "call({}) to {}".format(params[0], params[1])
+        elif type == REQ_DELIVER:
+            string = "deliver({}) from {}".format(params[0], params[1])
+
+        if self.highestStep not in self.addedRequests:
+            self.addedRequests[self.highestStep] = [string]
+        else:
+            self.addedRequests[self.highestStep].append(string)
 
     def getStats(self):
         """
@@ -390,8 +406,8 @@ class Interface(QtGui.QWidget):
     """
     Class that should hold the information for the elevator. Currently only has the interface but in the future it should hold the stats aswell.
     """
-    def __init__(self):
-        super(Interface, self).__init__()
+    def __init__(self, parent = None):
+        super(Interface, self).__init__(parent)
 
         self.elevatorInterface = ElevatorInterface()
         self.elevatorInterfaceVis = ElevatorInterfaceVis(VisConfig.size)
@@ -438,8 +454,8 @@ class ElevatorWindow(Interface):
     """
     This class just creates a window for a given encoding.
     """
-    def __init__(self):
-        super(ElevatorWindow, self).__init__()
+    def __init__(self, parent = None):
+        super(ElevatorWindow, self).__init__(parent)
 
         self.setGeometry(VisConfig.width, VisConfig.height, VisConfig.width, VisConfig.height)
         self.setWindowTitle("Instance")

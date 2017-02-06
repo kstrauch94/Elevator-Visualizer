@@ -20,35 +20,37 @@ class MainWindow(QtGui.QWidget):
 
         self.mainVbox = QtGui.QVBoxLayout() #will contain button HBox and another Hbox which contains Elevator Hbox and info Box
 
-        self.menuBar = QtGui.QMenuBar()
-        self.menuBar.setNativeMenuBar(False)
+        self.initWindows()
+
+        self.elevatorWindow2 = ElevatorWindow.ElevatorWindow()
+
         self.prepareMenuBar()
-
-
-        self.buttonsHbox = QtGui.QHBoxLayout() #HBox for the buttons
-        self.buttonsHbox.setAlignment(QtCore.Qt.AlignLeft)
-
-        self.ConfigInfoVbox = QtGui.QVBoxLayout()
-        self.ConfigInfoVbox.setAlignment(QtCore.Qt.AlignLeft)
-
-        #info is set in the setInterface function
-        self.instanceInfo = {}
-        self.setInterface()
 
         self.prepareButtons()
 
-        self.mainVbox.addWidget(self.menuBar)
-        self.mainVbox.addLayout(self.buttonsHbox)
-        self.mainVbox.addLayout(self.ConfigInfoVbox)
+        self.prepareInterface()
 
         self.setLayout(self.mainVbox)
 
         self.show()
 
 
+    def initWindows(self):
+        self.elevatorWindow = ElevatorWindow.ElevatorWindow()
+        self.elevatorWindow.show()
+
+        self.requestWindow = Widgets.RequestsWindow()
+
+        self.planWindow = Widgets.PlanWindow()
+
     def prepareMenuBar(self):
 
+        self.menuBar = QtGui.QMenuBar()
+        self.menuBar.setNativeMenuBar(False)
+
+        ### Load Menu
         loadMenu = self.menuBar.addMenu("Load")
+
         loadInstanceAction = QtGui.QAction("Load Instance", self)
         loadInstanceAction.triggered.connect(self.loadInstance)
         loadMenu.addAction(loadInstanceAction)
@@ -56,6 +58,19 @@ class MainWindow(QtGui.QWidget):
         loadEncodingAction = QtGui.QAction("Load Encoding", self)
         loadEncodingAction.triggered.connect(self.loadEncoding)
         loadMenu.addAction(loadEncodingAction)
+
+        ### Window Menu
+        windowMenu = self.menuBar.addMenu("Windows")
+
+        reqWindow = QtGui.QAction("Show Requests", self)
+        reqWindow.triggered.connect(lambda: self.requestWindow.show())
+        windowMenu.addAction(reqWindow)
+
+        planWindow = QtGui.QAction("Show Plan", self)
+        planWindow.triggered.connect(lambda: self.planWindow.show())
+        windowMenu.addAction(planWindow)
+
+        self.mainVbox.addWidget(self.menuBar)
 
 
     def loadInstance(self):
@@ -80,6 +95,9 @@ class MainWindow(QtGui.QWidget):
 
     def prepareButtons(self):
         #creates all buttons and adds them to the Hbox
+
+        self.buttonsHbox = QtGui.QHBoxLayout()  # HBox for the buttons
+        self.buttonsHbox.setAlignment(QtCore.Qt.AlignLeft)
 
         self.prevBtn = QtGui.QPushButton("Previous Action", self)
         self.prevBtn.clicked.connect(self.previous)
@@ -106,6 +124,7 @@ class MainWindow(QtGui.QWidget):
         self.resetBtn.resize(self.resetBtn.sizeHint())
         self.buttonsHbox.addWidget(self.resetBtn)
 
+        self.mainVbox.addLayout(self.buttonsHbox)
 
     def addCallRequest(self):
 
@@ -159,15 +178,21 @@ class MainWindow(QtGui.QWidget):
 
         self.instanceInfo["Requests Completed"].setText("Requests Completed : " + str(self.elevatorWindow.elevatorInterface.requestCompleted))
 
-    def setInterface(self):
+
+        self.requestWindow.setRequests(self.elevatorWindow.elevatorInterface.requestsServed, self.elevatorWindow.elevatorInterface.addedRequests)
+
+        self.planWindow.setPlan(self.elevatorWindow.elevatorInterface.plan)
+
+    def prepareInterface(self):
         """
         Creates a window for every encoding. It also extracts the floor and agent amounts and stores them.
         :return: Void
         """
-        # This list contains the reference to all the created windows for the encodings
-        self.elevatorWindow = ElevatorWindow.ElevatorWindow()
-        self.elevatorWindow.show()
+        self.ConfigInfoVbox = QtGui.QVBoxLayout()
+        self.ConfigInfoVbox.setAlignment(QtCore.Qt.AlignLeft)
 
+        #info is set in the setInterface function
+        self.instanceInfo = {}
 
         text = "floors : " + str(self.elevatorWindow.elevatorInterface.floors)
         self.instanceInfo["floors"] = QtGui.QLabel(text, self)
@@ -197,10 +222,15 @@ class MainWindow(QtGui.QWidget):
 
         self.ConfigInfoVbox.addStretch(1)
 
+        self.mainVbox.addLayout(self.ConfigInfoVbox)
+
+
     def reset(self):
 
         self.elevatorWindow.reset()
         self.elevatorWindow.repaint()
+
+        #TODO : Add reset for the other windows!
 
         self.updateInfo()
 
