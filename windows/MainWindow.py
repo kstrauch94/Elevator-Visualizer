@@ -14,6 +14,7 @@ class MainWindow(QtGui.QWidget):
 
     def __init__(self):
         super(MainWindow, self).__init__()
+        self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
 
         self.setGeometry(VisConfig.width, VisConfig.height, VisConfig.width, VisConfig.height)
         self.setWindowTitle("Elevator")
@@ -53,10 +54,12 @@ class MainWindow(QtGui.QWidget):
 
         loadInstanceAction = QtGui.QAction("Load Instance", self)
         loadInstanceAction.triggered.connect(self.loadInstance)
+        loadInstanceAction.setShortcut("Ctrl+I")
         loadMenu.addAction(loadInstanceAction)
 
         loadEncodingAction = QtGui.QAction("Load Encoding", self)
         loadEncodingAction.triggered.connect(self.loadEncoding)
+        loadEncodingAction.setShortcut("Ctrl+E")
         loadMenu.addAction(loadEncodingAction)
 
         ### Window Menu
@@ -64,10 +67,12 @@ class MainWindow(QtGui.QWidget):
 
         reqWindow = QtGui.QAction("Show Requests", self)
         reqWindow.triggered.connect(lambda: self.requestWindow.show())
+        reqWindow.setShortcut("Ctrl+R")
         windowMenu.addAction(reqWindow)
 
         planWindow = QtGui.QAction("Show Plan", self)
         planWindow.triggered.connect(lambda: self.planWindow.show())
+        planWindow.setShortcut("Ctrl+P")
         windowMenu.addAction(planWindow)
 
         self.mainVbox.addWidget(self.menuBar)
