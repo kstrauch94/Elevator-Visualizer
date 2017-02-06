@@ -265,6 +265,9 @@ class PlanWindow(QtGui.QWidget):
 
         self.vbox = QtGui.QVBoxLayout()
 
+        self.header = QtGui.QLabel("No Plan yet")
+        self.vbox.addWidget(self.header)
+
         self.elevatorHBox = QtGui.QHBoxLayout()
 
         self.elevatorVBoxDict = {}
@@ -277,6 +280,7 @@ class PlanWindow(QtGui.QWidget):
     def setPlan(self, plan):
 
         if plan != {}:
+            self.header.setText("--- Plan ---")
 
             if self.elevatorHBox.count() == 0:
                 #Adding the time step vbox
@@ -324,6 +328,8 @@ class PlanWindow(QtGui.QWidget):
 
         self.elevatorVBoxDict = {}
         self.elevatorActionDict = {}
+
+        self.header.setText("No Plan yet")
 
 
 
