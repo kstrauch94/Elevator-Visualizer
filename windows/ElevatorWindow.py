@@ -252,11 +252,11 @@ class ElevatorInterface():
 
         self.setElevators()
 
-        self.plan = None
-        self.requestInfo = None
+        self.plan = {}
+        self.requestInfo = {}
         self.addedRequests = {}
 
-        self.requestsServed = None
+        self.requestsServed = {}
 
         self.hasToSolve = True
 
@@ -396,6 +396,12 @@ class ElevatorInterface():
         self.step = 0
         self.highestStep = 0
         self.planLength = 0
+
+        self.plan = {}
+        self.requestInfo = {}
+        self.addedRequests = {}
+
+        self.requestsServed = {}
 
         self.setElevators()
 

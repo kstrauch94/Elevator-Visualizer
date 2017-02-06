@@ -230,7 +230,8 @@ class MainWindow(QtGui.QWidget):
         self.elevatorWindow.reset()
         self.elevatorWindow.repaint()
 
-        #TODO : Add reset for the other windows!
+        self.planWindow.reset()
+        self.requestWindow.reset()
 
         self.updateInfo()
 

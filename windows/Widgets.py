@@ -228,6 +228,24 @@ class RequestsWindow(QtGui.QWidget):
         if self.added != {}:
             self.headerAdded.setText("Added Requests: ")
 
+    def reset(self):
+        for i in reversed(range(self.addedVBox.count())):
+            self.addedVBox.itemAt(i).widget().setParent(None)
+
+        for i in reversed(range(self.servedVBox.count())):
+            self.servedVBox.itemAt(i).widget().setParent(None)
+
+        self.served = {}
+        self.added = {}
+
+        self.headerAdded.setText("No Requests Added")
+        self.addedVBox.addWidget(self.headerAdded)
+
+        self.headerServed.setText("No Requests Served")
+        self.servedVBox.addWidget(self.headerServed)
+
+
+
 
 class PlanWindow(QtGui.QWidget):
 
@@ -258,31 +276,54 @@ class PlanWindow(QtGui.QWidget):
 
     def setPlan(self, plan):
 
-        if self.elevatorHBox.count() == 0:
-            for i in range(len(plan[1])):
+        if plan != {}:
+
+            if self.elevatorHBox.count() == 0:
+                #Adding the time step vbox
                 vbox = QtGui.QVBoxLayout()
-                label = QtGui.QLabel("Elev " + str(i+1))
+                label = QtGui.QLabel("Step")
                 vbox.addWidget(label)
 
-                self.elevatorActionDict[i+1] = {}
+                for i in range(len(plan[1])):
+                    #Adding a vbox for every elevator
+                    vbox = QtGui.QVBoxLayout()
+                    label = QtGui.QLabel("Elev " + str(i+1))
+                    vbox.addWidget(label)
 
-                self.elevatorVBoxDict[i+1] = vbox
-                self.elevatorHBox.addLayout(vbox)
+                    self.elevatorActionDict[i+1] = {}
 
-        for time in plan:
-            for move in plan[time]:
-                elev = move[0]
-                action = move[1]
+                    self.elevatorVBoxDict[i+1] = vbox
+                    self.elevatorHBox.addLayout(vbox)
 
-                if time not in self.elevatorActionDict[elev]:
-                    label = QtGui.QLabel(self)
-                    label.setPixmap(self.imagedict[action])
-                    self.elevatorActionDict[elev][time] = label
-                    self.elevatorVBoxDict[elev].addWidget(label)
+            for time in plan:
+                for move in plan[time]:
+                    elev = move[0]
+                    action = move[1]
 
-                else:
-                    self.elevatorActionDict[elev][time].setPixmap(self.imagedict[action])
+                    if time not in self.elevatorActionDict[elev]:
+                        label = QtGui.QLabel(self)
+                        label.setPixmap(self.imagedict[action])
+                        self.elevatorActionDict[elev][time] = label
+                        self.elevatorVBoxDict[elev].addWidget(label)
 
+                    else:
+                        self.elevatorActionDict[elev][time].setPixmap(self.imagedict[action])
+
+    def reset(self):
+
+        self.vbox = QtGui.QVBoxLayout()
+
+        #for every vbox in the dict
+        for i in range(len(self.elevatorVBoxDict)):
+            #for every element in the vbox
+            for j in reversed(range(self.elevatorVBoxDict[i+1].count())):
+                self.elevatorVBoxDict[i+1].itemAt(j).widget().setParent(None)
+
+        for i in reversed(range(self.elevatorHBox.count())):
+            self.elevatorHBox.itemAt(i).layout().setParent(None)
+
+        self.elevatorVBoxDict = {}
+        self.elevatorActionDict = {}
 
 
 
