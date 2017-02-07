@@ -253,8 +253,31 @@ class PlanWindow(QtGui.QWidget):
         super(PlanWindow, self).__init__()
         self.setWindowTitle("Plan")
 
-        # images for the actions
-        self.actionpic = QtGui.QLabel(self)
+        self.vbox = QtGui.QVBoxLayout()
+        self.planWidget = PlanWidget()
+
+        self.scroller = QtGui.QScrollArea()
+        self.scroller.setWidget(self.planWidget)
+        self.scroller.setWidgetResizable(True)
+
+        self.vbox.addWidget(self.scroller)
+
+        self.setLayout(self.vbox)
+
+    def setPlan(self, plan):
+
+        self.planWidget.setPlan(plan)
+        self.planWidget.repaint()
+
+    def reset(self):
+        self.planWidget.reset()
+
+
+class PlanWidget(QtGui.QWidget):
+
+    def __init__(self, parent = None):
+        super(PlanWidget, self).__init__(parent)
+
         # images
         self.imagedict = {}
         self.imagedict[Constants.UP] = QtGui.QPixmap(os.getcwd() + "/res/uparrow.png")
@@ -263,17 +286,17 @@ class PlanWindow(QtGui.QWidget):
         self.imagedict[Constants.SERVE] = QtGui.QPixmap(os.getcwd() + "/res/stay.png")
         self.imagedict[Constants.NONEACT] = QtGui.QPixmap(os.getcwd() + "/res/none.png")
 
+
         self.vbox = QtGui.QVBoxLayout()
 
         self.header = QtGui.QLabel("No Plan yet")
         self.vbox.addWidget(self.header)
 
         self.elevatorHBox = QtGui.QHBoxLayout()
+        self.vbox.addLayout(self.elevatorHBox)
 
         self.elevatorVBoxDict = {}
         self.elevatorActionDict = {}
-
-        self.vbox.addLayout(self.elevatorHBox)
 
         self.setLayout(self.vbox)
 
@@ -283,20 +306,20 @@ class PlanWindow(QtGui.QWidget):
             self.header.setText("--- Plan ---")
 
             if self.elevatorHBox.count() == 0:
-                #Adding the time step vbox
+                # Adding the time step vbox
                 vbox = QtGui.QVBoxLayout()
                 label = QtGui.QLabel("Step")
                 vbox.addWidget(label)
 
                 for i in range(len(plan[1])):
-                    #Adding a vbox for every elevator
+                    # Adding a vbox for every elevator
                     vbox = QtGui.QVBoxLayout()
-                    label = QtGui.QLabel("Elev " + str(i+1))
+                    label = QtGui.QLabel("Elev " + str(i + 1))
                     vbox.addWidget(label)
 
-                    self.elevatorActionDict[i+1] = {}
+                    self.elevatorActionDict[i + 1] = {}
 
-                    self.elevatorVBoxDict[i+1] = vbox
+                    self.elevatorVBoxDict[i + 1] = vbox
                     self.elevatorHBox.addLayout(vbox)
 
             for time in plan:
@@ -317,11 +340,11 @@ class PlanWindow(QtGui.QWidget):
 
         self.vbox = QtGui.QVBoxLayout()
 
-        #for every vbox in the dict
+        # for every vbox in the dict
         for i in range(len(self.elevatorVBoxDict)):
-            #for every element in the vbox
-            for j in reversed(range(self.elevatorVBoxDict[i+1].count())):
-                self.elevatorVBoxDict[i+1].itemAt(j).widget().setParent(None)
+            # for every element in the vbox
+            for j in reversed(range(self.elevatorVBoxDict[i + 1].count())):
+                self.elevatorVBoxDict[i + 1].itemAt(j).widget().setParent(None)
 
         for i in reversed(range(self.elevatorHBox.count())):
             self.elevatorHBox.itemAt(i).layout().setParent(None)
@@ -330,6 +353,3 @@ class PlanWindow(QtGui.QWidget):
         self.elevatorActionDict = {}
 
         self.header.setText("No Plan yet")
-
-
-
