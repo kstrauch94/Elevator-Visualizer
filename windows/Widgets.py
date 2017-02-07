@@ -300,6 +300,7 @@ class PlanWidget(QtGui.QWidget):
 
         self.elevatorHBox = QtGui.QHBoxLayout()
         self.vbox.addLayout(self.elevatorHBox)
+        self.vbox.addStretch(1)
 
         self.elevatorVBoxDict = {}
         self.elevatorActionDict = {}

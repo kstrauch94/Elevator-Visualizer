@@ -1,6 +1,6 @@
 from PyQt4 import QtGui, QtCore
 
-import VisConfig, SolverConfig
+import VisConfig
 import ElevatorWindow, Widgets
 from Constants import *
 
@@ -19,11 +19,9 @@ class MainWindow(QtGui.QWidget):
         self.setGeometry(VisConfig.width, VisConfig.height, VisConfig.width, VisConfig.height)
         self.setWindowTitle("Elevator")
 
-        self.mainVbox = QtGui.QVBoxLayout() #will contain button HBox and another Hbox which contains Elevator Hbox and info Box
+        self.mainVbox = QtGui.QVBoxLayout()
 
         self.initWindows()
-
-        self.elevatorWindow2 = ElevatorWindow.ElevatorWindow()
 
         self.prepareMenuBar()
 
