@@ -185,20 +185,26 @@ class RequestsWindow(QtGui.QWidget):
         self.served = {}
         self.added = {}
 
-        self.vbox = QtGui.QVBoxLayout()
+        self.hbox = QtGui.QHBoxLayout()
 
+        self.servedStretcherVBox = QtGui.QVBoxLayout()
         self.headerServed = QtGui.QLabel("No Requests Served")
         self.servedVBox = QtGui.QVBoxLayout()
         self.servedVBox.addWidget(self.headerServed)
+        self.servedStretcherVBox.addLayout(self.servedVBox)
+        self.servedStretcherVBox.addStretch(1)
 
+        self.addedStretcherVBox = QtGui.QVBoxLayout()
         self.headerAdded = QtGui.QLabel("No Requests Added")
         self.addedVBox = QtGui.QVBoxLayout()
         self.addedVBox.addWidget(self.headerAdded)
+        self.addedStretcherVBox.addLayout(self.addedVBox)
+        self.addedStretcherVBox.addStretch(1)
 
-        self.vbox.addLayout(self.servedVBox)
-        self.vbox.addLayout(self.addedVBox)
+        self.hbox.addLayout(self.servedStretcherVBox)
+        self.hbox.addLayout(self.addedStretcherVBox)
 
-        self.setLayout(self.vbox)
+        self.setLayout(self.hbox)
 
     def setRequests(self, served, added):
 
