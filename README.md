@@ -1,5 +1,5 @@
 # Elevator-Visualizer
-This program was tested with PyQt4 version 4.11.4 and with clingo version 5.1.0
+This program was tested with PyQt4 version 4.11.4 and with clingo version 5.1.0.
 
 PyQt4 can be found at: https://riverbankcomputing.com/software/pyqt/download
 
@@ -7,9 +7,9 @@ Clingo can be found at: https://potassco.org/
 
 ## Visualizer
 
-The visualizer can be configured in the Cofig.py file. The important variables are the encoding and the instances. The encoding variable must be a list with the encodings that want to be used in the visualization. These variables can also be set with command line arguments. A separate window will be created for every encoding in the list. The instance must be one file.
+The visualizer can be configured in the VisCofig.py and SolverConfig.py files. The important variables in the SolverConfig.py file are the encoding and the instance. The encoding variable must be a path to the encoding that is to be used in the solving process the visualization. These variables can also be set with command line arguments. A separate window will be created for every encoding in the list. The instance must be one file. The initial size of the window aswell as the size of the elevators can be changed in the VisConfig.py file.
 
-Any extra files can be included with the #include directive in the encoding file.
+Any extra encoding files (such as strategies) can be included with the #include directive in the encoding file.
 
 The visualization has vertical rectangle divided into squares as the elevator shaft. The elevator is a red square. The last action performed is visualized below by either an arrow or a rectangle. An "N" is displayed if no action was taken. To the right there are stats about the last solved call such as the solving time.
 
@@ -48,7 +48,7 @@ The instance generator and the checker can also be used independently from the v
 	
 ## Instance Generator
 
-Instances can be created with the InstanceGenerator.py script. It can either prompt for the details or they can be given as parameters in the command line. The instances created conform to the standards described above. Use the -h command for more info. Examples can be found in the EXAMPLES file.
+Instances can be created with the InstanceGenerator.py script. It can either prompt for the details or they can be given as parameters in the command line. The instances created conform to the standards described above. Use the -h command for more information. Examples can be found in the EXAMPLES file.
 
 ## Checker
 

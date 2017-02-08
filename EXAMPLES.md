@@ -8,31 +8,21 @@ With the default configuration of the visualizer one can run the following comma
 $ python Elevator.py
 ```
 
-This pops up 2 windows. One contains 5 labeled buttons and one contains the visualization of the instance. It has 1 elevator shaft with the elevator(red square) currently sitting in the 3rd floor. Pressing the next action button moves the elevator. After clicking the button a couple times, the square will eventually turn green. This means that a "serve" action was executed.
+This pops up 2 windows. One contains labeled buttons and one contains the visualization of the instance. It has some elevator shafts with the elevator(red square) currently sitting in some floor. Pressing the next action button moves the elevator. After clicking the button a couple times, the square will eventually turn green. This means that a "serve" action was executed. Images of the last executed action can be seen at the bottom of the elevator shaft. 
 
 Running the command
 ```
 $ python Elevator.py -i instances/Elevatorinstance2.lp
 ```
 
-to change the default instance to "instances/Elevatorinstance2.lp" opens 2 windows. One has the familiar buttons and the other now has 4 elevator shafts with the elevators sitting in the first floor. As before, the buttons work the same way. The next action solves the instance and moves the elevators one time step, the add request buttons add more requests to the solver and the reset button resets the instance.
-
-Now, using the command 
-```
-$ python Elevator.py -e encodings/Elevator.lp encodings/Elevator.lp
-```
-
-to change the default encoding variable to now contain two encodings, the program will now spawn 3 windows. One contains the usual buttons and the other 2 contain the elevator instance visualization. What happens to one instance is completely unrelated to the others. This way it is possible to visualize the different plans of the different encodings. In this case, however, the plan is the same since the encodings are the same.
-
-The clingo solver arguments can be given in the options variables in the Config.py file. Every option must be a separate item in the list. For more information on those options refer to the clingo help options and documentation.
+to change the default instance to "instances/Elevatorinstance2.lp" opens 2 windows. One has the familiar buttons and the other now has 4 elevator shafts with the elevators sitting in the first floor. 
 
 ## Checker
 
-Outputing the help with the command:
+Outputing the help text with the command:
 ```
 $ python Checker -h
 ```
-
 explains the arguments that can be given.
 
 Now, use the following command from the home directory of the packgage:

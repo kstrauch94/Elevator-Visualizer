@@ -6,6 +6,12 @@ V 0.3
 * add Instance visualization has now a scrollbar
 * add Menu bar
 	* can now load encoding and instance from the program
+	* can now spawn new plan and request windows
+
+* add new image for serve actions
+* add status variables in the main window including current requests and served requests
+
+* upt Widget for adding request now easier to use
 
 V 0.2
 
