@@ -22,7 +22,7 @@ class CallRequestDialog(QtGui.QDialog):
         self.mainVBox = QtGui.QVBoxLayout()
 
         self.reqLabel = QtGui.QLabel()
-        self.reqLabel.setText("Type : {} \nFloor : {}".format(self.type, self.floor))
+        self.reqLabel.setText("Direction : {} \nFloor : {}".format(self.type, self.floor))
         self.mainVBox.addWidget(self.reqLabel)
 
         self.setTypeButtons()
@@ -76,12 +76,12 @@ class CallRequestDialog(QtGui.QDialog):
     def setType(self, dir):
         self.type = dir
 
-        self.reqLabel.setText("Type : {} \nFloor : {}".format(self.type, self.floor))
+        self.reqLabel.setText("Direction : {} \nFloor : {}".format(self.type, self.floor))
 
     def setFloor(self, floor):
         self.floor = floor
 
-        self.reqLabel.setText("Type : {} \nFloor : {}".format(self.type, self.floor))
+        self.reqLabel.setText("Direction : {} \nFloor : {}".format(self.type, self.floor))
 
     @staticmethod
     def getRequest(floors, parent=None):
@@ -105,7 +105,7 @@ class DeliverRequestDialog(QtGui.QDialog):
         self.mainVBox = QtGui.QVBoxLayout()
 
         self.reqLabel = QtGui.QLabel()
-        self.reqLabel.setText("Type : {} \nFloor : {}".format(self.elevator, self.floor))
+        self.reqLabel.setText("Elevator : {} \nFloor : {}".format(self.elevator, self.floor))
         self.mainVBox.addWidget(self.reqLabel)
 
         self.setElevatorButtons(elevAmt)
@@ -162,12 +162,12 @@ class DeliverRequestDialog(QtGui.QDialog):
     def setElevator(self, elev):
         self.elevator = elev
 
-        self.reqLabel.setText("Type : {} \nFloor : {}".format(self.elevator, self.floor))
+        self.reqLabel.setText("Elevator : {} \nFloor : {}".format(self.elevator, self.floor))
 
     def setFloor(self, floor):
         self.floor = floor
 
-        self.reqLabel.setText("Type : {} \nFloor : {}".format(self.elevator, self.floor))
+        self.reqLabel.setText("Elevator : {} \nFloor : {}".format(self.elevator, self.floor))
 
     @staticmethod
     def getRequest(floors, elevs, parent=None):
@@ -249,9 +249,6 @@ class RequestsWindow(QtGui.QWidget):
 
         self.headerServed.setText("No Requests Served")
         self.servedVBox.addWidget(self.headerServed)
-
-
-
 
 class PlanWindow(QtGui.QWidget):
 
