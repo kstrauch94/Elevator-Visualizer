@@ -4,6 +4,8 @@ import VisConfig
 import ElevatorWindow, Widgets
 from Constants import *
 
+import os
+
 
 
 class MainWindow(QtGui.QMainWindow):
@@ -14,7 +16,6 @@ class MainWindow(QtGui.QMainWindow):
 
     def __init__(self):
         super(MainWindow, self).__init__()
-        self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
 
         self.setGeometry(VisConfig.width, VisConfig.height, VisConfig.width, VisConfig.height)
         self.setWindowTitle("Elevator")
@@ -82,7 +83,7 @@ class MainWindow(QtGui.QMainWindow):
     def loadInstance(self):
 
         dialog = QtGui.QFileDialog()
-        instance = str(dialog.getOpenFileName())
+        instance = str(dialog.getOpenFileName(self, "Open File", os.getcwd(), "All files (*.*)", options=QtGui.QFileDialog.DontUseNativeDialog))
 
         if instance != "":
             self.elevatorWindow.elevatorInterface.bridge.instance = instance
@@ -91,7 +92,7 @@ class MainWindow(QtGui.QMainWindow):
     def loadEncoding(self):
 
         dialog = QtGui.QFileDialog()
-        encoding = str(dialog.getOpenFileName())
+        encoding = str(dialog.getOpenFileName(self, "Open File", os.getcwd(), "All files (*.*)", options=QtGui.QFileDialog.DontUseNativeDialog))
 
         if encoding != "":
             self.elevatorWindow.elevatorInterface.bridge.encoding = encoding
