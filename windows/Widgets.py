@@ -304,6 +304,12 @@ class PlanWidget(QtGui.QWidget):
         if plan != {}:
             self.header.setText("--- Plan ---")
 
+            if self.elevatorGrid.count() == 0:
+                for move in plan[1]:
+                    elev = move[0]
+                    label = QtGui.QLabel("Elev " + str(elev))
+                    self.elevatorGrid.addWidget(label, 0, elev)
+
             for time in plan:
                 if not self.elevatorGrid.itemAtPosition(time, 0):
                     label = QtGui.QLabel("Step " + str(time), self)
