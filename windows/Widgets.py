@@ -298,11 +298,10 @@ class PlanWidget(QtGui.QWidget):
         self.header = QtGui.QLabel("No Plan yet")
         self.vbox.addWidget(self.header)
 
-        self.elevatorHBox = QtGui.QHBoxLayout()
-        self.vbox.addLayout(self.elevatorHBox)
+        self.elevatorGrid = QtGui.QGridLayout()
+        self.vbox.addLayout(self.elevatorGrid)
         self.vbox.addStretch(1)
 
-        self.elevatorVBoxDict = {}
         self.elevatorActionDict = {}
 
         self.setLayout(self.vbox)
@@ -312,36 +311,23 @@ class PlanWidget(QtGui.QWidget):
         if plan != {}:
             self.header.setText("--- Plan ---")
 
-            if self.elevatorHBox.count() == 0:
-                # Adding the time step vbox
-                vbox = QtGui.QVBoxLayout()
-                label = QtGui.QLabel("Step")
-                vbox.addWidget(label)
-
-                for i in range(len(plan[1])):
-                    # Adding a vbox for every elevator
-                    vbox = QtGui.QVBoxLayout()
-                    label = QtGui.QLabel("Elev " + str(i + 1))
-                    vbox.addWidget(label)
-
-                    self.elevatorActionDict[i + 1] = {}
-
-                    self.elevatorVBoxDict[i + 1] = vbox
-                    self.elevatorHBox.addLayout(vbox)
-
             for time in plan:
+                if not self.elevatorGrid.itemAtPosition(time, 0):
+                    label = QtGui.QLabel("Step " + str(time), self)
+                    self.elevatorGrid.addWidget(label, time, 0)
+
                 for move in plan[time]:
                     elev = move[0]
                     action = move[1]
 
-                    if time not in self.elevatorActionDict[elev]:
+                    if not self.elevatorGrid.itemAtPosition(time, elev):
                         label = QtGui.QLabel(self)
                         label.setPixmap(self.imagedict[action])
-                        self.elevatorActionDict[elev][time] = label
-                        self.elevatorVBoxDict[elev].addWidget(label)
-
+                        self.elevatorActionDict[time, elev] = label
+                        self.elevatorGrid.addWidget(label, time, elev)
                     else:
-                        self.elevatorActionDict[elev][time].setPixmap(self.imagedict[action])
+                        self.elevatorGrid.itemAtPosition(time, elev).widget().setPixmap(self.imagedict[action])
+
 
     def reset(self):
 
