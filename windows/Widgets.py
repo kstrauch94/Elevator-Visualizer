@@ -331,18 +331,10 @@ class PlanWidget(QtGui.QWidget):
 
     def reset(self):
 
-        self.vbox = QtGui.QVBoxLayout()
+        for i in reversed(range(self.elevatorGrid.count())):
+            self.elevatorGrid.itemAt(i).widget().setParent(None)
 
-        # for every vbox in the dict
-        for i in range(len(self.elevatorVBoxDict)):
-            # for every element in the vbox
-            for j in reversed(range(self.elevatorVBoxDict[i + 1].count())):
-                self.elevatorVBoxDict[i + 1].itemAt(j).widget().setParent(None)
 
-        for i in reversed(range(self.elevatorHBox.count())):
-            self.elevatorHBox.itemAt(i).layout().setParent(None)
-
-        self.elevatorVBoxDict = {}
         self.elevatorActionDict = {}
 
         self.header.setText("No Plan yet")
