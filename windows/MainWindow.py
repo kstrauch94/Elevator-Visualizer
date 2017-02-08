@@ -6,7 +6,7 @@ from Constants import *
 
 
 
-class MainWindow(QtGui.QWidget):
+class MainWindow(QtGui.QMainWindow):
     """
     Main class. It creates a window with the parameters in the VisConfig.py file.
     It also creates the buttons and the windows for the encodings in the VisConfig.py file.
@@ -29,7 +29,10 @@ class MainWindow(QtGui.QWidget):
 
         self.prepareInterface()
 
-        self.setLayout(self.mainVbox)
+        self.mainWidget = QtGui.QWidget()
+        self.mainWidget.setLayout(self.mainVbox)
+
+        self.setCentralWidget(self.mainWidget)
 
         self.show()
 
@@ -202,15 +205,10 @@ class MainWindow(QtGui.QWidget):
 
         text = "Elevators : " + str(self.elevatorWindow.elevatorInterface.elevatorCount)
         self.instanceInfo["agents"] = QtGui.QLabel(text, self)
-
         self.instanceInfo["Current Step"] = QtGui.QLabel("Current Step : 0", self)
-
         self.instanceInfo["Highest Step"] = QtGui.QLabel("Highest Step : 0", self)
-
         self.instanceInfo["Total Plan Length"] = QtGui.QLabel("Total Plan Length : 0", self)
-
         self.instanceInfo["Current Requests"] = QtGui.QLabel("Current Requests : No Requests", self)
-
         self.instanceInfo["Requests Completed"] = QtGui.QLabel("Requests Completed : No Requests", self)
 
 

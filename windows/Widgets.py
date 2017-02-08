@@ -176,79 +176,75 @@ class DeliverRequestDialog(QtGui.QDialog):
 
         return (result == QtGui.QDialog.Accepted, dialog.elevator, dialog.floor)
 
+
 class RequestsWindow(QtGui.QWidget):
 
     def __init__(self):
         super(RequestsWindow, self).__init__()
         self.setWindowTitle("Requests")
 
-        self.served = {}
-        self.added = {}
-
         self.hbox = QtGui.QHBoxLayout()
 
-        self.servedStretcherVBox = QtGui.QVBoxLayout()
-        self.headerServed = QtGui.QLabel("No Requests Served")
-        self.servedVBox = QtGui.QVBoxLayout()
-        self.servedVBox.addWidget(self.headerServed)
-        self.servedStretcherVBox.addLayout(self.servedVBox)
-        self.servedStretcherVBox.addStretch(1)
+        self.served = RequestBox("No Requests Served", "Served Requests: ")
+        self.added = RequestBox("No Requests Added", "Added Requests: ")
 
-        self.addedStretcherVBox = QtGui.QVBoxLayout()
-        self.headerAdded = QtGui.QLabel("No Requests Added")
-        self.addedVBox = QtGui.QVBoxLayout()
-        self.addedVBox.addWidget(self.headerAdded)
-        self.addedStretcherVBox.addLayout(self.addedVBox)
-        self.addedStretcherVBox.addStretch(1)
-
-        self.hbox.addLayout(self.servedStretcherVBox)
-        self.hbox.addLayout(self.addedStretcherVBox)
+        self.hbox.addWidget(self.served)
+        self.hbox.addWidget(self.added)
 
         self.setLayout(self.hbox)
 
     def setRequests(self, served, added):
 
-        for time in served:
-            if served[time] != []:
-                string = "In step " + str(time) + " : " + ", ".join(served[time])
-                if time not in self.served:
-                    label = QtGui.QLabel(string, self)
-                    self.served[time] = label
-                    self.servedVBox.addWidget(label)
-                else:
-                    self.served[time].setText(string)
-
-
-        for time in added:
-            string = "In step " + str(time) + " : " + ",  ".join(added[time])
-            if time not in self.added:
-                label = QtGui.QLabel(string, self)
-                self.added[time] = label
-                self.addedVBox.addWidget(label)
-            else:
-                self.added[time].setText(string)
-
-        if self.served != {}:
-            self.headerServed.setText("Served Requests: ")
-
-        if self.added != {}:
-            self.headerAdded.setText("Added Requests: ")
+        self.served.setRequests(served)
+        self.added.setRequests(added)
 
     def reset(self):
-        for i in reversed(range(self.addedVBox.count())):
-            self.addedVBox.itemAt(i).widget().setParent(None)
 
-        for i in reversed(range(self.servedVBox.count())):
-            self.servedVBox.itemAt(i).widget().setParent(None)
+        self.served.reset()
+        self.added.reset()
 
-        self.served = {}
-        self.added = {}
+class RequestBox(QtGui.QWidget):
 
-        self.headerAdded.setText("No Requests Added")
-        self.addedVBox.addWidget(self.headerAdded)
+    def __init__(self, emptyStr, Str):
+        super(RequestBox, self).__init__()
 
-        self.headerServed.setText("No Requests Served")
-        self.servedVBox.addWidget(self.headerServed)
+        self.reqs = {}
+        self.emptyStr = emptyStr
+        self.notemptyStr = Str
+
+        self.StretcherVBox = QtGui.QVBoxLayout()
+        self.header = QtGui.QLabel(self.emptyStr)
+        self.vbox = QtGui.QVBoxLayout()
+        self.vbox.addWidget(self.header)
+        self.StretcherVBox.addLayout(self.vbox)
+        self.StretcherVBox.addStretch(1)
+
+        self.setLayout(self.StretcherVBox)
+
+    def setRequests(self, new):
+
+        for time in new:
+            if new[time] != []:
+                string = "In step " + str(time) + " : " + ",  ".join(new[time])
+                if time not in self.reqs:
+                    label = QtGui.QLabel(string, self)
+                    self.reqs[time] = label
+                    self.vbox.addWidget(label)
+                else:
+                    self.reqs[time].setText(string)
+
+        if self.reqs != {}:
+            self.header.setText(self.notemptyStr)
+
+    def reset(self):
+        for i in reversed(range(self.vbox.count())):
+            self.vbox.itemAt(i).widget().setParent(None)
+
+        self.reqs = {}
+
+        self.header.setText(self.emptyStr)
+        self.vbox.addWidget(self.header)
+
 
 class PlanWindow(QtGui.QWidget):
 
