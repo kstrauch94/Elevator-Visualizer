@@ -28,11 +28,12 @@ class ElevatorVis(QtGui.QWidget):
 
         # images for the actions
         self.actionpic = QtGui.QLabel(self)
-        # images
-        self.uparrowImg = QtGui.QPixmap(os.getcwd() + "/res/uparrow.png")
-        self.downarrowImg = QtGui.QPixmap(os.getcwd() + "/res/downarrow.png")
-        self.stayImg = QtGui.QPixmap(os.getcwd() + "/res/stay.png")
-        self.noneImg = QtGui.QPixmap(os.getcwd() + "/res/none.png")
+        self.imagedict = {}
+        self.imagedict[UP] = QtGui.QPixmap(os.getcwd() + "/res/uparrow.png")
+        self.imagedict[DOWN] = QtGui.QPixmap(os.getcwd() + "/res/downarrow.png")
+        self.imagedict[WAIT] = QtGui.QPixmap(os.getcwd() + "/res/stay.png")
+        self.imagedict[SERVE] = QtGui.QPixmap(os.getcwd() + "/res/serve.png")
+        self.imagedict[NONEACT] = QtGui.QPixmap(os.getcwd() + "/res/none.png")
 
     def setDrawPos(self, x, y):
         """
@@ -91,15 +92,8 @@ class ElevatorVis(QtGui.QWidget):
         qp.drawRect(self.xpos + 2, self.ypos + 2 - self.currentFloor * self.size, self.size - 4, self.size - 4)
 
         # draw image of last action
-        if self.lastAction == SERVE or self.lastAction == WAIT:
-            self.actionpic.setPixmap(self.stayImg)
-        elif self.lastAction == UP:
-            self.actionpic.setPixmap(self.uparrowImg)
-        elif self.lastAction == DOWN:
-            self.actionpic.setPixmap(self.downarrowImg)
-        elif self.lastAction == NONEACT:
-            self.actionpic.setPixmap(self.noneImg)
-
+        if self.lastAction != None:
+            self.actionpic.setPixmap(self.imagedict[self.lastAction])
 
         # the +15 after ypos is to separate the image from the elevator a bit
         self.actionpic.setGeometry((self.size-32)/2, self.ypos + 15, self.size, self.size)
@@ -119,7 +113,15 @@ class Elevator():
         self.lastStep = 0
         self.history = [startPos]
 
-        self.actionHistory = [None]
+        self.moveDict = {}
+        self.moveDict[UP] = 1
+        self.moveDict[DOWN] = -1
+        self.moveDict[WAIT] = 0
+        self.moveDict[SERVE] = 0
+        self.moveDict[NONEACT] = 0
+
+
+        self.actionHistory = [NONEACT]
 
     def execute(self, action):
         """
@@ -138,13 +140,7 @@ class Elevator():
             print "Invalid move, trying to move up when already at the top floor."
             return
 
-        if action != WAIT and action != NONEACT:
-
-            self.history.append(currentFloor + action)
-
-        elif action == WAIT or action == NONEACT:
-
-            self.history.append(currentFloor)
+        self.history.append(self.currentFloor + self.moveDict[action])
 
         self.lastStep += 1
 
@@ -162,10 +158,7 @@ class Elevator():
 
     @property
     def lastAction(self):
-        if self.step == 0:
-            return None
-        else:
-            return self.actionHistory[self.step]
+        return self.actionHistory[self.step]
 
 class ElevatorInterfaceVis(QtGui.QWidget):
     """ Visualizer for the whole instance. Keeps track of every elevator in the instance."""
