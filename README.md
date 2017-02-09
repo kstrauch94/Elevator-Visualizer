@@ -21,7 +21,7 @@ $ python Elevator.py -o
 
 ## Encoding and Instance specification
 
-#### When visualizing a plan:
+#### When visualizing a plan the plan file must have:
 
 - "do(E, A, t)" action predicates
 - (optional) holds(request(Type,Floor), Time) predicates for the requests that are active at some timepoint
