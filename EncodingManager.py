@@ -1,4 +1,4 @@
-import json
+import json, os
 
 import clingo
 
@@ -114,10 +114,12 @@ class Solver():
         # update stat recording of the current step and stat var for the solving status is made true
         self.solved = True
 
-        # check model
-        # convert shown atoms (which should be the actions) into a list of strings
-        self.checker.checkList(self.instance, [a.__str__() for a in model.symbols(shown = True)])
-        self.checkErrors.val = self.checker.shownAtoms
+        if os.path.isfile(SolverConfig.checker):
+            # check model
+            # convert shown atoms (which should be the actions) into a list of strings
+            self.checker.checkList(self.instance, [a.__str__() for a in model.symbols(shown = True)])
+            self.checkErrors.val = self.checker.shownAtoms
+
 
 
         self.completePlan = []
