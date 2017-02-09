@@ -5,6 +5,11 @@ SERVE = 0
 WAIT = "waitaction"
 NONEACT = "noaction"
 
+UPTEXT    = "move(1)"
+DOWNTEXT  = "move(-1)"
+SERVETEXT = "serve"
+WAITTEXT  = "wait"
+
 REQ_CALL     = "call"
 REQ_DELIVER  = "deliver"
 

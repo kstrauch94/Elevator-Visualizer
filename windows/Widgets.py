@@ -285,6 +285,12 @@ class PlanWidget(QtGui.QWidget):
         self.imagedict[Constants.SERVE] = QtGui.QPixmap(os.getcwd() + "/res/serve.png")
         self.imagedict[Constants.NONEACT] = QtGui.QPixmap(os.getcwd() + "/res/none.png")
 
+        # Action text
+        self.textDict = {}
+        self.textDict[Constants.UP] = Constants.UPTEXT
+        self.textDict[Constants.DOWN] = Constants.DOWNTEXT
+        self.textDict[Constants.SERVE] = Constants.SERVETEXT
+        self.textDict[Constants.WAIT] = Constants.WAITTEXT
 
         self.vbox = QtGui.QVBoxLayout()
 
@@ -320,12 +326,14 @@ class PlanWidget(QtGui.QWidget):
                     action = move[1]
 
                     if not self.elevatorGrid.itemAtPosition(time, elev):
-                        label = QtGui.QLabel(self)
-                        label.setPixmap(self.imagedict[action])
-                        self.elevatorActionDict[time, elev] = label
-                        self.elevatorGrid.addWidget(label, time, elev)
+                        picture = QtGui.QLabel(self)
+                        picture.setPixmap(self.imagedict[action])
+                        text = QtGui.QLabel(self.textDict[action], self)
+                        actionwidget = ActionWidget(picture, text)
+                        self.elevatorActionDict[time, elev] = actionwidget
+                        self.elevatorGrid.addWidget(actionwidget, time, elev)
                     else:
-                        self.elevatorGrid.itemAtPosition(time, elev).widget().setPixmap(self.imagedict[action])
+                        self.elevatorGrid.itemAtPosition(time, elev).widget().setAction(self.imagedict[action], self.textDict[action])
 
 
     def reset(self):
@@ -337,3 +345,23 @@ class PlanWidget(QtGui.QWidget):
         self.elevatorActionDict = {}
 
         self.header.setText("No Plan yet")
+
+
+class ActionWidget(QtGui.QWidget):
+
+    def __init__(self, picture, text):
+        super(ActionWidget, self).__init__()
+
+        self.picture = picture
+        self.text = text
+
+        self.vbox = QtGui.QVBoxLayout()
+
+        self.vbox.addWidget(self.picture)
+        self.vbox.addWidget(self.text)
+
+        self.setLayout(self.vbox)
+
+    def setAction(self, picture, text):
+        self.picture.setPixmap(picture)
+        self.text.setText(text)
