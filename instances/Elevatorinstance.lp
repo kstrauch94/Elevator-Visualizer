@@ -18,4 +18,4 @@ init(at(elevator(1), 3)).
 init(request(deliver(1), 2)).
 init(request(call(up), 9)).
 
-callrequest(up,2,7).
+callrequestinst(up,2,7).

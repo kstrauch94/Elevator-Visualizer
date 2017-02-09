@@ -21,11 +21,11 @@ dir(up).
 dir(down).
 
 
-#external callrequest(D, Floor, T) : dir(D), Floor = 1..floors, T = 1..imax.
-#external deliverrequest(ID, Floor, T) : ID = 1..agents, Floor = 1..floors, T = 1..imax.
+#external callrequestinst(D, Floor, T) : dir(D), Floor = 1..floors, T = 1..imax.
+#external deliverrequestinst(ID, Floor, T) : ID = 1..agents, Floor = 1..floors, T = 1..imax.
 
-holds(request(call(D),Floor), T) :- callrequest(D, Floor, T).
-holds(request(deliver(ID),Floor), T) :- deliverrequest(ID, Floor, T).
+holds(request(call(D),Floor), T) :- callrequestinst(D, Floor, T).
+holds(request(deliver(ID),Floor), T) :- deliverrequestinst(ID, Floor, T).
 
 
 holds(F,0) :- init(F).
