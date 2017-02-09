@@ -246,7 +246,7 @@ class ElevatorInterface():
         self.setElevators()
 
         self.plan = {}
-        self.requestInfo = {}
+        self.requestInfo = self.bridge.getRequests()
         self.addedRequests = {}
 
         self.requestsServed = {}
@@ -318,10 +318,9 @@ class ElevatorInterface():
         self.planLength = len(self.plan)
 
         self.requestInfo = self.bridge.getRequests()
-        try:
+        if len(self.requestInfo) != 0:
             self.addedRequests[0] = self.requestInfo[0]
-        except KeyError:
-            pass
+
         self.parseRequests()
 
     def parseRequests(self):
@@ -394,7 +393,7 @@ class ElevatorInterface():
         self.planLength = 0
 
         self.plan = {}
-        self.requestInfo = {}
+        self.requestInfo = self.bridge.getRequests()
         self.addedRequests = {}
 
         self.requestsServed = {}

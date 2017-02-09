@@ -49,10 +49,22 @@ class Solver():
 
         self.checker = Checker.Checker(SolverConfig.checker)
 
+        self.getInitialReqs()
 
     def get(self, val, default):
         return val if val != None else default
 
+
+    def getInitialReqs(self):
+
+        self.reqs.val = []
+
+        for x in self.control.symbolic_atoms:
+            if x.is_fact:
+                atom = x.symbol
+                if atom.name == "holds":
+                    if atom.arguments[0].name == "request":
+                        self.reqs.val.append(atom)
 
     def groundStart(self):
         """
@@ -114,16 +126,8 @@ class Solver():
         # update stat recording of the current step and stat var for the solving status is made true
         self.solved = True
 
-        if os.path.isfile(SolverConfig.checker):
-            # check model
-            # convert shown atoms (which should be the actions) into a list of strings
-            self.checker.checkList(self.instance, [a.__str__() for a in model.symbols(shown = True)])
-            self.checkErrors.val = self.checker.shownAtoms
-
-
-
         self.completePlan = []
-        for atom in model.symbols(shown = True):
+        for atom in model.symbols(atoms = True):
             if atom.name == "do":
                 self.completePlan.append(atom)
 
@@ -132,6 +136,12 @@ class Solver():
             if atom.name == "holds":
                 if atom.arguments[0].name == "request":
                     self.reqs.val.append(atom)
+
+        if os.path.isfile(SolverConfig.checker):
+            # check model
+            # convert shown atoms (which should be the actions) into a list of strings
+            self.checker.checkList(self.instance, [a.__str__() for a in self.completePlan])
+            self.checkErrors.val = self.checker.shownAtoms
 
 
         if SolverConfig.printAtoms:

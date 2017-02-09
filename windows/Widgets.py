@@ -255,21 +255,35 @@ class PlanWindow(QtGui.QWidget):
         self.vbox = QtGui.QVBoxLayout()
         self.planWidget = PlanWidget()
 
+        self.headerText = QtGui.QLabel("No Plan yet")
+        self.headerButton = QtGui.QPushButton("Toggle Action Text")
+        self.headerButton.clicked.connect(self.planWidget.toggleText)
+        self.headerButton.resize(self.headerButton.sizeHint())
+
+        self.header = QtGui.QHBoxLayout()
+        self.header.addWidget(self.headerText)
+        self.header.addWidget(self.headerButton)
+
         self.scroller = QtGui.QScrollArea()
         self.scroller.setWidget(self.planWidget)
         self.scroller.setWidgetResizable(True)
 
+        self.vbox.addLayout(self.header)
         self.vbox.addWidget(self.scroller)
 
         self.setLayout(self.vbox)
 
     def setPlan(self, plan):
 
+        if plan != {}:
+            self.headerText.setText("--- Plan ---")
+
         self.planWidget.setPlan(plan)
         self.planWidget.repaint()
 
     def reset(self):
         self.planWidget.reset()
+        self.headerText.setText("No Plan yet")
 
 
 class PlanWidget(QtGui.QWidget):
@@ -277,25 +291,9 @@ class PlanWidget(QtGui.QWidget):
     def __init__(self, parent = None):
         super(PlanWidget, self).__init__(parent)
 
-        # images
-        self.imagedict = {}
-        self.imagedict[Constants.UP] = QtGui.QPixmap(os.getcwd() + "/res/uparrow.png")
-        self.imagedict[Constants.DOWN] = QtGui.QPixmap(os.getcwd() + "/res/downarrow.png")
-        self.imagedict[Constants.WAIT] = QtGui.QPixmap(os.getcwd() + "/res/stay.png")
-        self.imagedict[Constants.SERVE] = QtGui.QPixmap(os.getcwd() + "/res/serve.png")
-        self.imagedict[Constants.NONEACT] = QtGui.QPixmap(os.getcwd() + "/res/none.png")
-
-        # Action text
-        self.textDict = {}
-        self.textDict[Constants.UP] = Constants.UPTEXT
-        self.textDict[Constants.DOWN] = Constants.DOWNTEXT
-        self.textDict[Constants.SERVE] = Constants.SERVETEXT
-        self.textDict[Constants.WAIT] = Constants.WAITTEXT
+        self.showText = True
 
         self.vbox = QtGui.QVBoxLayout()
-
-        self.header = QtGui.QLabel("No Plan yet")
-        self.vbox.addWidget(self.header)
 
         self.elevatorGrid = QtGui.QGridLayout()
         self.vbox.addLayout(self.elevatorGrid)
@@ -308,7 +306,6 @@ class PlanWidget(QtGui.QWidget):
     def setPlan(self, plan):
 
         if plan != {}:
-            self.header.setText("--- Plan ---")
 
             if self.elevatorGrid.count() == 0:
                 for move in plan[1]:
@@ -326,14 +323,19 @@ class PlanWidget(QtGui.QWidget):
                     action = move[1]
 
                     if not self.elevatorGrid.itemAtPosition(time, elev):
-                        picture = QtGui.QLabel(self)
-                        picture.setPixmap(self.imagedict[action])
-                        text = QtGui.QLabel(self.textDict[action], self)
-                        actionwidget = ActionWidget(picture, text)
+                        actionwidget = ActionWidget(action, self.showText)
                         self.elevatorActionDict[time, elev] = actionwidget
                         self.elevatorGrid.addWidget(actionwidget, time, elev)
                     else:
-                        self.elevatorGrid.itemAtPosition(time, elev).widget().setAction(self.imagedict[action], self.textDict[action])
+                        self.elevatorGrid.itemAtPosition(time, elev).widget().setAction(action)
+
+    def toggleText(self):
+
+        self.showText = not self.showText
+
+        if len(self.elevatorActionDict) != 0:
+            for item in self.elevatorActionDict:
+                self.elevatorActionDict[item].setVisibleText(self.showText)
 
 
     def reset(self):
@@ -344,16 +346,33 @@ class PlanWidget(QtGui.QWidget):
 
         self.elevatorActionDict = {}
 
-        self.header.setText("No Plan yet")
-
 
 class ActionWidget(QtGui.QWidget):
 
-    def __init__(self, picture, text):
+    def __init__(self, action, displayTest = False):
         super(ActionWidget, self).__init__()
 
-        self.picture = picture
-        self.text = text
+        # images
+        self.imagedict = {}
+        self.imagedict[Constants.UP] = QtGui.QPixmap(os.getcwd() + "/res/uparrow.png")
+        self.imagedict[Constants.DOWN] = QtGui.QPixmap(os.getcwd() + "/res/downarrow.png")
+        self.imagedict[Constants.WAIT] = QtGui.QPixmap(os.getcwd() + "/res/stay.png")
+        self.imagedict[Constants.SERVE] = QtGui.QPixmap(os.getcwd() + "/res/serve.png")
+        self.imagedict[Constants.NONEACT] = QtGui.QPixmap(os.getcwd() + "/res/none.png")
+
+        # Action text
+        self.textDict = {}
+        self.textDict[Constants.UP] = Constants.UPTEXT
+        self.textDict[Constants.DOWN] = Constants.DOWNTEXT
+        self.textDict[Constants.SERVE] = Constants.SERVETEXT
+        self.textDict[Constants.WAIT] = Constants.WAITTEXT
+
+        self.picture = QtGui.QLabel(self)
+        self.picture.setPixmap(self.imagedict[action])
+
+        self.text = QtGui.QLabel(self.textDict[action], self)
+        if not displayTest:
+            self.text.hide()
 
         self.vbox = QtGui.QVBoxLayout()
 
@@ -362,6 +381,12 @@ class ActionWidget(QtGui.QWidget):
 
         self.setLayout(self.vbox)
 
-    def setAction(self, picture, text):
-        self.picture.setPixmap(picture)
-        self.text.setText(text)
+    def setAction(self, action):
+        self.picture.setPixmap(self.imagedict[action])
+        self.text.setText(self.textDict[action])
+
+    def setVisibleText(self, bool):
+        if bool:
+            self.text.show()
+        else:
+            self.text.hide()

@@ -206,11 +206,11 @@ class MainWindow(QtGui.QMainWindow):
 
         text = "Elevators : " + str(self.elevatorWindow.elevatorInterface.elevatorCount)
         self.instanceInfo["agents"] = QtGui.QLabel(text, self)
-        self.instanceInfo["Current Step"] = QtGui.QLabel("Current Step : 0", self)
-        self.instanceInfo["Highest Step"] = QtGui.QLabel("Highest Step : 0", self)
-        self.instanceInfo["Total Plan Length"] = QtGui.QLabel("Total Plan Length : 0", self)
-        self.instanceInfo["Current Requests"] = QtGui.QLabel("Current Requests : No Requests", self)
-        self.instanceInfo["Requests Completed"] = QtGui.QLabel("Requests Completed : No Requests", self)
+        self.instanceInfo["Current Step"] = QtGui.QLabel("Current Step : " + str(self.elevatorWindow.elevatorInterface.step), self)
+        self.instanceInfo["Highest Step"] = QtGui.QLabel("Highest Step : " + str(self.elevatorWindow.elevatorInterface.highestStep), self)
+        self.instanceInfo["Total Plan Length"] = QtGui.QLabel("Total Plan Length : " + str(self.elevatorWindow.elevatorInterface.planLength), self)
+        self.instanceInfo["Current Requests"] = QtGui.QLabel("Current Requests : " + str(self.elevatorWindow.elevatorInterface.currentRequests), self)
+        self.instanceInfo["Requests Completed"] = QtGui.QLabel("Requests Completed : " + str(self.elevatorWindow.elevatorInterface.requestCompleted), self)
 
 
 

@@ -31,7 +31,7 @@ $ python Elevator.py -o
 - The actions must be: move(1), move(-1), serve, and wait
 - The action execution predicate must have the form "do(E, A, t)" where E is of the form "elevator(N)" with N being a integer, A is an action as the ones described above and t the timestep. E.g. do(elevator(1),serve,5).
 - no #minimize statements
-- The usual clingo directives for incremental solving
+- The usual clingo directives for incremental solving (including the query(t) external)
 
 #### Additional properties for online planning:
 
