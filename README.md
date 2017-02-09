@@ -21,21 +21,26 @@ $ python Elevator.py -o
 
 ## Encoding and Instance specification
 
+#### When visualizing a plan:
+
+- "do(E, A, t)" action predicates
+- (optional) holds(request(Type,Floor), Time) predicates for the requests that are active at some timepoint
+
 #### The clingo encoding specified in the Config.py file must have the following properties:
 
 - The actions must be: move(1), move(-1), serve, and wait
 - The action execution predicate must have the form "do(E, A, t)" where E is of the form "elevator(N)" with N being a integer, A is an action as the ones described above and t the timestep. E.g. do(elevator(1),serve,5).
+- no #minimize statements
+- The usual clingo directives for incremental solving
+
+#### Additional properties for online planning:
+
 - The external history(E,A,t) : agent(E), action(A).
 - The externals #external callrequest(D, Floor, t) : dir(D), Floor = 1..floors.
 -				#external deliverrequest(ID, Floor, t) : ID = 1..agents, Floor = 1..floors.
-- a #show do/3. statement.
-- no #minimize statements
-- The usual clingo #program directives for incremental solving, base, step(t) and check(t).
-- The #external query(t)
 
 #### The instances must have the following properties:
 
-- #program base. directive
 - #const agents=N. line with N being the amount of elevators
 - #const floors = F. line with F being the amount of floors
 - #const startID = S. line for every elevator. The ID is replaced with the elevator ID and S is the starting position.
