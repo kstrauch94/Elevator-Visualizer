@@ -20,7 +20,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=desc, formatter_class=RawTextHelpFormatter)
 
     parser.add_argument("-o", "--off-line", help="Solve and print the full plan without the visualizer then exit.", action="store_true")
-    parser.add_argument("-e", "--encoding", help="Encoding file name to use initially.", nargs="+", default=SolverConfig.encoding)
+    parser.add_argument("-e", "--encoding", help="Encoding file name to use initially.", default=SolverConfig.encoding)
     parser.add_argument("-i", "--instance", help="Instance file name to use initially.", default=SolverConfig.instance)
 
 
