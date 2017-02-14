@@ -322,7 +322,7 @@ class ElevatorInterface(QtCore.QObject):
 
     def solve(self):
         self.plan = self.bridge.nextMoves(self.highestStep)
-        self.planLength = len(self.plan)
+        self.planLength = max(self.plan)
 
         self.fillPlan()
 
@@ -341,11 +341,17 @@ class ElevatorInterface(QtCore.QObject):
         """
 
         for t in range(1, self.planLength + 1):
-            if len(self.plan[t]) != self.elevatorCount:
-                elevs = range(1, self.elevatorCount+1)
-                for move in self.plan[t]:
-                    elevs.remove(move[0])
+            if t in self.plan:
+                if len(self.plan[t]) != self.elevatorCount:
+                    elevs = range(1, self.elevatorCount+1)
+                    for move in self.plan[t]:
+                        elevs.remove(move[0])
 
+                    for e in elevs:
+                        self.plan[t].append([e, NONEACT])
+            else:
+                elevs = range(1, self.elevatorCount + 1)
+                self.plan[t] = []
                 for e in elevs:
                     self.plan[t].append([e, NONEACT])
 
