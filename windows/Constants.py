@@ -9,6 +9,7 @@ UPTEXT    = "move(1)"
 DOWNTEXT  = "move(-1)"
 SERVETEXT = "serve"
 WAITTEXT  = "wait"
+NONEACTTEXT = "no action"
 
 REQ_CALL     = "call"
 REQ_DELIVER  = "deliver"

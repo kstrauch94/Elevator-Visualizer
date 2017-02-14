@@ -290,16 +290,16 @@ class ElevatorInterface(QtCore.QObject):
         if len(self.plan) > self.step:
             self.step += 1
 
-            if self.step - 1 == self.highestStep :
+            if self.step - 1 == self.highestStep:
                 self.highestStep += 1
 
                 moves = self.plan[self.step]
-                if moves != []:
-                    for move in moves:
-                        # get elevator ID
-                        elevator = move[0]
-                        action = move[1]
-                        self.elevators[elevator - 1].execute(action)
+                for move in moves:
+                    # get elevator ID
+                    elevator = move[0]
+                    action = move[1]
+                    self.elevators[elevator - 1].execute(action)
+
 
 
             for e in self.elevators:
@@ -322,7 +322,9 @@ class ElevatorInterface(QtCore.QObject):
 
     def solve(self):
         self.plan = self.bridge.nextMoves(self.highestStep)
-        self.planLength = len(self.plan)
+        self.planLength = max(self.plan)
+
+        self.fillPlan()
 
         self.requestInfo = self.bridge.getRequests()
         if len(self.requestInfo) != 0:
@@ -332,6 +334,27 @@ class ElevatorInterface(QtCore.QObject):
 
         self.planChangedSignal.emit(self.plan)
         self.requestChangedSignal.emit(self.requestsServed, self.addedRequests)
+
+    def fillPlan(self):
+        """
+        Fills the spots in the plan with no actions to contain a NONEACT.
+        """
+
+        for t in range(1, self.planLength + 1):
+            if t in self.plan:
+                if len(self.plan[t]) != self.elevatorCount:
+                    elevs = range(1, self.elevatorCount+1)
+                    for move in self.plan[t]:
+                        elevs.remove(move[0])
+
+                    for e in elevs:
+                        self.plan[t].append([e, NONEACT])
+            else:
+                elevs = range(1, self.elevatorCount + 1)
+                self.plan[t] = []
+                for e in elevs:
+                    self.plan[t].append([e, NONEACT])
+
 
     def parseRequests(self):
 

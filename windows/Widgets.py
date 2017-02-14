@@ -351,7 +351,7 @@ class PlanWidget(QtGui.QWidget):
 
 class ActionWidget(QtGui.QWidget):
 
-    def __init__(self, action, displayTest = False):
+    def __init__(self, action, displayText = False):
         super(ActionWidget, self).__init__()
 
         # images
@@ -368,12 +368,15 @@ class ActionWidget(QtGui.QWidget):
         self.textDict[Constants.DOWN] = Constants.DOWNTEXT
         self.textDict[Constants.SERVE] = Constants.SERVETEXT
         self.textDict[Constants.WAIT] = Constants.WAITTEXT
+        self.textDict[Constants.NONEACT] = Constants.NONEACTTEXT
 
         self.picture = QtGui.QLabel(self)
         self.picture.setPixmap(self.imagedict[action])
+        if self.imagedict[action].isNull():
+            self.picture.hide()
 
         self.text = QtGui.QLabel(self.textDict[action], self)
-        if not displayTest:
+        if not displayText:
             self.text.hide()
 
         self.vbox = QtGui.QVBoxLayout()
@@ -385,6 +388,11 @@ class ActionWidget(QtGui.QWidget):
 
     def setAction(self, action):
         self.picture.setPixmap(self.imagedict[action])
+        if self.imagedict[action].isNull():
+            self.picture.hide()
+        else:
+            self.picture.show()
+
         self.text.setText(self.textDict[action])
 
     def setVisibleText(self, bool):

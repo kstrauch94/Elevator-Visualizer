@@ -175,7 +175,13 @@ class InstanceGenerator(object):
 
         dir = ["up","down"]
 
-        return "call,{d},{floor}".format(d = dir[random.randint(0,1)], floor = random.randint(1, self.floors)).split(",")
+        selectedDir = dir[random.randint(0,1)]
+        if selectedDir == "up":
+            selectedFloor = random.randint(1, self.floors-1)
+        elif selectedDir == "down":
+            selectedFloor = random.randint(2, self.floors)
+
+        return "call,{d},{floor}".format(d = selectedDir, floor = selectedFloor).split(",")
 
     def randomDeliver(self):
 
