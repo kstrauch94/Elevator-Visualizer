@@ -6,8 +6,6 @@ from Constants import *
 
 import os
 
-
-
 class MainWindow(QtGui.QMainWindow):
     """
     Main class. It creates a window with the parameters in the VisConfig.py file.
@@ -45,6 +43,10 @@ class MainWindow(QtGui.QMainWindow):
         self.requestWindow = Widgets.RequestsWindow()
 
         self.planWindow = Widgets.PlanWindow()
+
+        #Conections
+        self.elevatorWindow.elevatorInterface.planChangedSignal.connect(self.planWindow.setPlan)
+        self.elevatorWindow.elevatorInterface.requestChangedSignal.connect(self.requestWindow.setRequests)
 
     def prepareMenuBar(self):
 
@@ -159,7 +161,6 @@ class MainWindow(QtGui.QMainWindow):
         :return: Void
         """
         self.elevatorWindow.next()
-        self.elevatorWindow.repaint()
 
         self.updateInfo()
 
@@ -169,11 +170,9 @@ class MainWindow(QtGui.QMainWindow):
         :return: Void
         """
         self.elevatorWindow.previous()
-        self.elevatorWindow.repaint()
-
         self.updateInfo()
 
-    def updateInfo(self, *__args):
+    def updateInfo(self):
 
         self.instanceInfo["Current Step"].setText("Current Step : " + str(self.elevatorWindow.elevatorInterface.step))
 
@@ -184,11 +183,6 @@ class MainWindow(QtGui.QMainWindow):
         self.instanceInfo["Current Requests"].setText("Current Requests : " + str(self.elevatorWindow.elevatorInterface.currentRequests))
 
         self.instanceInfo["Requests Completed"].setText("Requests Completed : " + str(self.elevatorWindow.elevatorInterface.requestCompleted))
-
-
-        self.requestWindow.setRequests(self.elevatorWindow.elevatorInterface.requestsServed, self.elevatorWindow.elevatorInterface.addedRequests)
-
-        self.planWindow.setPlan(self.elevatorWindow.elevatorInterface.plan)
 
     def prepareInterface(self):
         """
@@ -230,7 +224,6 @@ class MainWindow(QtGui.QMainWindow):
     def reset(self):
 
         self.elevatorWindow.reset()
-        self.elevatorWindow.repaint()
 
         self.planWindow.reset()
         self.requestWindow.reset()

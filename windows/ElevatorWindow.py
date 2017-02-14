@@ -4,7 +4,7 @@ import EncodingManager
 import SolverConfig, VisConfig
 from Constants import *
 
-import os
+import os, time
 
 
 class ElevatorVis(QtGui.QWidget):
@@ -52,6 +52,7 @@ class ElevatorVis(QtGui.QWidget):
         self.drawWidget(qp)
 
         qp.end()
+        time.sleep(0.01)
 
     def updateElevator(self, elevator):
         """
@@ -62,6 +63,7 @@ class ElevatorVis(QtGui.QWidget):
         self.floors = elevator.floors
         self.currentFloor = elevator.currentFloor
         self.lastAction = elevator.lastAction
+        self.update()
 
     def drawWidget(self, qp):
 
@@ -213,7 +215,6 @@ class ElevatorInterfaceVis(QtGui.QWidget):
         for i in range(0, len(self.elevatorsVis)):
             self.elevatorsVis[i].updateElevator(elevatorInterface.elevators[i])
 
-
     def reset(self):
         """
         Resets the whole interface and deletes the old elevator visualizers from the layout container. Then, it creates everything again
@@ -224,15 +225,21 @@ class ElevatorInterfaceVis(QtGui.QWidget):
 
 
 
-class ElevatorInterface():
+class ElevatorInterface(QtCore.QObject):
     """
     Data class for the whole instance. Keeps track of every individual elevator.
     """
+
+    planChangedSignal = QtCore.pyqtSignal(dict)
+    requestChangedSignal = QtCore.pyqtSignal(dict, dict)
+
     def __init__(self):
         """
         Parameters usually in the VisConfig.py file
         :param id : id of the solver to be used.
         """
+
+        super(ElevatorInterface, self).__init__()
 
         self.bridge = Connect()
 
@@ -322,6 +329,9 @@ class ElevatorInterface():
             self.addedRequests[0] = self.requestInfo[0]
 
         self.parseRequests()
+
+        self.planChangedSignal.emit(self.plan)
+        self.requestChangedSignal.emit(self.requestsServed, self.addedRequests)
 
     def parseRequests(self):
 
@@ -430,7 +440,6 @@ class Interface(QtGui.QWidget):
 
     def updateAll(self):
         self.elevatorInterfaceVis.updateElevators(self.elevatorInterface)
-        self.elevatorInterfaceVis.repaint()
         stats = self.elevatorInterface.bridge.getStats()
         self.infoPanel.updateStats(stats)
 
@@ -453,7 +462,7 @@ class Interface(QtGui.QWidget):
 
 class ElevatorWindow(Interface):
     """
-    This class just creates a window for a given encoding.
+    This class just creates a window
     """
     def __init__(self, parent = None):
         super(ElevatorWindow, self).__init__(parent)

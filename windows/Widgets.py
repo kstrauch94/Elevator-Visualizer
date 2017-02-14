@@ -193,6 +193,7 @@ class RequestsWindow(QtGui.QWidget):
 
         self.setLayout(self.hbox)
 
+    @QtCore.pyqtSlot(dict, dict)
     def setRequests(self, served, added):
 
         self.served.setRequests(served)
@@ -273,6 +274,7 @@ class PlanWindow(QtGui.QWidget):
 
         self.setLayout(self.vbox)
 
+    @QtCore.pyqtSlot(dict)
     def setPlan(self, plan):
 
         if plan != {}:
