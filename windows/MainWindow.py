@@ -9,7 +9,7 @@ import os
 class MainWindow(QtGui.QMainWindow):
     """
     Main class. It creates a window with the parameters in the VisConfig.py file.
-    It also creates the buttons and the windows for the encodings in the VisConfig.py file.
+    It also creates the window that displays the instance and the plan + request windows.
     """
 
     def __init__(self):
@@ -44,7 +44,7 @@ class MainWindow(QtGui.QMainWindow):
 
         self.planWindow = Widgets.PlanWindow()
 
-        #Conections
+        #Conections for updates
         self.elevatorWindow.elevatorInterface.planChangedSignal.connect(self.planWindow.setPlan)
         self.elevatorWindow.elevatorInterface.requestChangedSignal.connect(self.requestWindow.setRequests)
 
@@ -87,6 +87,8 @@ class MainWindow(QtGui.QMainWindow):
         dialog = QtGui.QFileDialog()
         instance = str(dialog.getOpenFileName(self, "Open File", os.getcwd(), "All files (*.*)", options=QtGui.QFileDialog.DontUseNativeDialog))
 
+        self.instanceInfo["instance"].setText("Instance : " + instance)
+
         if instance != "":
             self.elevatorWindow.elevatorInterface.bridge.instance = instance
             self.reset()
@@ -95,6 +97,8 @@ class MainWindow(QtGui.QMainWindow):
 
         dialog = QtGui.QFileDialog()
         encoding = str(dialog.getOpenFileName(self, "Open File", os.getcwd(), "All files (*.*)", options=QtGui.QFileDialog.DontUseNativeDialog))
+        self.instanceInfo["encoding"].setText("Encoding : " + encoding)
+
 
         if encoding != "":
             self.elevatorWindow.elevatorInterface.bridge.encoding = encoding
@@ -157,17 +161,14 @@ class MainWindow(QtGui.QMainWindow):
 
     def next(self):
         """
-        Function is called when the "Next Action"button is pressed. It calls an update for every solver(encoding).
-        :return: Void
+        Function is called when the "Next Action" button is pressed.
         """
         self.elevatorWindow.next()
-
         self.updateInfo()
 
     def previous(self):
         """
-        Function is called when the "Previous Action" button is pressed. It calls an update for every solver(encoding).
-        :return: Void
+        Function is called when the "Previous Action" button is pressed.
         """
         self.elevatorWindow.previous()
         self.updateInfo()
@@ -186,8 +187,7 @@ class MainWindow(QtGui.QMainWindow):
 
     def prepareInterface(self):
         """
-        Creates a window for every encoding. It also extracts the floor and agent amounts and stores them.
-        :return: Void
+        Creates a window for the isntance. It also extracts information from it and initializes the information display
         """
         self.ConfigInfoVbox = QtGui.QVBoxLayout()
         self.ConfigInfoVbox.setAlignment(QtCore.Qt.AlignLeft)
@@ -195,11 +195,15 @@ class MainWindow(QtGui.QMainWindow):
         #info is set in the setInterface function
         self.instanceInfo = {}
 
+        self.instanceInfo["encoding"] = QtGui.QLabel("Encoding : " + self.elevatorWindow.elevatorInterface.bridge.encoding)
+        self.instanceInfo["instance"] = QtGui.QLabel("Instance : " + self.elevatorWindow.elevatorInterface.bridge.instance)
+
         text = "floors : " + str(self.elevatorWindow.elevatorInterface.floors)
         self.instanceInfo["floors"] = QtGui.QLabel(text, self)
 
         text = "Elevators : " + str(self.elevatorWindow.elevatorInterface.elevatorCount)
         self.instanceInfo["agents"] = QtGui.QLabel(text, self)
+
         self.instanceInfo["Current Step"] = QtGui.QLabel("Current Step : " + str(self.elevatorWindow.elevatorInterface.step), self)
         self.instanceInfo["Highest Step"] = QtGui.QLabel("Highest Step : " + str(self.elevatorWindow.elevatorInterface.highestStep), self)
         self.instanceInfo["Total Plan Length"] = QtGui.QLabel("Total Plan Length : " + str(self.elevatorWindow.elevatorInterface.planLength), self)
@@ -207,7 +211,8 @@ class MainWindow(QtGui.QMainWindow):
         self.instanceInfo["Requests Completed"] = QtGui.QLabel("Requests Completed : " + str(self.elevatorWindow.elevatorInterface.requestCompleted), self)
 
 
-
+        self.ConfigInfoVbox.addWidget(self.instanceInfo["encoding"])
+        self.ConfigInfoVbox.addWidget(self.instanceInfo["instance"])
         self.ConfigInfoVbox.addWidget(self.instanceInfo["floors"])
         self.ConfigInfoVbox.addWidget(self.instanceInfo["agents"])
         self.ConfigInfoVbox.addWidget(self.instanceInfo["Current Step"])

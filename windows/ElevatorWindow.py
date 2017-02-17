@@ -22,7 +22,6 @@ class ElevatorVis(QtGui.QWidget):
         self.currentFloor = None
         self.lastAction = None
 
-        # this should be changed. Generally x stays at 0 but y must best the amount of floors time the size of the floors in pixels.
         self.xpos = 0
         self.ypos = 0
 
@@ -37,8 +36,9 @@ class ElevatorVis(QtGui.QWidget):
 
     def setDrawPos(self, x, y):
         """
-        :param x: usually left as 0 as the pyQT widget superclass takes over the x positioning.
-        :param y: should be the position when on floor 1 (ground floor), basically the height of the whole elevator "shaft"
+        :param x: usually left as 0 as the pyQT layout manages the position
+        :param y: should be the position when on floor 1 (ground floor), basically the height of the whole elevator "shaft"7
+                  Should be floors * size
         :return: void
         """
 
@@ -84,6 +84,7 @@ class ElevatorVis(QtGui.QWidget):
                 #NOTE the x and y pos for the text is the BOTTOM LEFT part
                 qp.drawText(self.xpos + 2, y - 2, text)
 
+        # Draw the elevator square
         if self.lastAction == SERVE:
             qp.setBrush(QtGui.QColor(0, 200, 0))
         else:
@@ -102,14 +103,10 @@ class ElevatorVis(QtGui.QWidget):
 
 class Elevator():
     """
-    Elevator data class. Keeps track of the elevator position.
+    Elevator data class. Keeps track of the elevator position, history and current +last step.
     """
     def __init__(self, floors, startPos):
-        """
 
-        :param floors: total amount of floors
-        :param startPos: starting floor
-        """
         self.floors = floors
         self.step = 0
         self.lastStep = 0
@@ -127,10 +124,9 @@ class Elevator():
 
     def execute(self, action):
         """
-        Only needs to know where to move. So depending on the action is goes up, down or stays.
+        Depending on the action is goes up, down or stays.
         This should only be called with a new action that directly follows the last one completed
         :param action: Action as defined in the Constants.py file
-        :return: void
         """
         currentFloor = self.history[self.lastStep]
         self.actionHistory.append(action)
@@ -163,20 +159,18 @@ class Elevator():
         return self.actionHistory[self.step]
 
 class ElevatorInterfaceVis(QtGui.QWidget):
-    """ Visualizer for the whole instance. Keeps track of every elevator in the instance."""
+    """
+    Visualizer for the whole instance. Keeps track of every elevator visualizer in the instance.
+    """
     def __init__(self, size):
         """
-        Initialize core visualization stuff. It is necessary to pass the data object to the initialize function after creating the object
-        :param encoding: encoding
-        :param instance: instance
+        Initialize core visualization stuff. It is necessary to pass the data object to the initialize function
+        after creating the object.
         :param size: size of the squares that represent the floors, usually defined in the VisConfig.py file
         """
         super(ElevatorInterfaceVis, self).__init__()
 
         self.size = size
-
-        #distance between elevator shafts
-        self.elevatorSeparation = 20
 
         self.hbox = QtGui.QHBoxLayout()
 
@@ -188,11 +182,11 @@ class ElevatorInterfaceVis(QtGui.QWidget):
         # calculate the total height of the shaft
         self.ypos = self.size * elevatorInterface.floors
 
-        self.setElevVis(elevatorInterface.elevatorCount, elevatorInterface.floors)
+        self.createElevVis(elevatorInterface.elevatorCount, elevatorInterface.floors)
         self.updateElevators(elevatorInterface)
 
 
-    def setElevVis(self, elevatorCount, floors):
+    def createElevVis(self, elevatorCount, floors):
         """
         Create a visualizer for every elevator in the instance and add it to the layout.
         """
@@ -211,13 +205,12 @@ class ElevatorInterfaceVis(QtGui.QWidget):
         """
         updated object needs to be passed to the individual elevator visualizers.
         """
-
         for i in range(0, len(self.elevatorsVis)):
             self.elevatorsVis[i].updateElevator(elevatorInterface.elevators[i])
 
     def reset(self):
         """
-        Resets the whole interface and deletes the old elevator visualizers from the layout container. Then, it creates everything again
+        Resets the whole interface and deletes the old elevator visualizers from the layout container.
         """
         for i in reversed(range(self.hbox.count())):
             self.hbox.itemAt(i).widget().setParent(None)
@@ -230,14 +223,11 @@ class ElevatorInterface(QtCore.QObject):
     Data class for the whole instance. Keeps track of every individual elevator.
     """
 
+    #Signals that update the plan and request windows
     planChangedSignal = QtCore.pyqtSignal(dict)
     requestChangedSignal = QtCore.pyqtSignal(dict, dict)
 
     def __init__(self):
-        """
-        Parameters usually in the VisConfig.py file
-        :param id : id of the solver to be used.
-        """
 
         super(ElevatorInterface, self).__init__()
 
@@ -275,10 +265,8 @@ class ElevatorInterface(QtCore.QObject):
 
     def next(self):
         """
-        Solves if it needs to solve
-        go to the next step, if it has not been executed -> give the action to elevator to execute it
-                             if it has been executed -> increase step counter by one
-        Then, call the next function on every elevator
+        increase step count by 1 if its possible. Solve again if a request has been added.
+        Also call the next function for every elevator if step count was increased.
         """
 
         if self.hasToSolve:
@@ -309,7 +297,6 @@ class ElevatorInterface(QtCore.QObject):
     def previous(self):
         """
         Lowers step value. if counter is at 1 (lowest) -> do nothing
-        :return:
         """
 
         if self.step >= 1:
@@ -321,13 +308,17 @@ class ElevatorInterface(QtCore.QObject):
 
 
     def solve(self):
+        """
+        Retrieve plan from bridge by calling nextMoves(Which calls the actual solver).
+        Process the plan + requests and emit signals that they changed
+        """
         self.plan = self.bridge.nextMoves(self.highestStep)
         self.planLength = max(self.plan)
 
         self.fillPlan()
 
         self.requestInfo = self.bridge.getRequests()
-        if len(self.requestInfo) != 0:
+        if 0 in self.requestInfo:
             self.addedRequests[0] = self.requestInfo[0]
 
         self.parseRequests()
@@ -357,6 +348,9 @@ class ElevatorInterface(QtCore.QObject):
 
 
     def parseRequests(self):
+        """
+        Sees if a request was completed by comparing time steps. If a request is in time T but not in T+1 then it was completed
+        """
 
         self.requestsServed = self.requestInfo.copy()
 
@@ -390,6 +384,11 @@ class ElevatorInterface(QtCore.QObject):
 
 
     def addRequest(self, type, *params):
+        """
+        Add request to the solver and keep track of it
+        :param type: request type
+        :param params: parameters of the request
+        """
         self.hasToSolve = True
         self.bridge.addRequest(type, self.highestStep, params)
 
@@ -413,10 +412,8 @@ class ElevatorInterface(QtCore.QObject):
 
     def reset(self):
         """
-        Creates a new solver object so that it reloads everything.
-        The request amount is not used for now.
-
-        It also creates the elevetor object again.
+        Creates a new solver object so that it reloads everything. Resets every tracking variable
+        It also creates the elevetor objects again.
         """
         self.bridge.reset()
         self.elevatorCount = self.bridge.getElevatorAmt()
@@ -436,12 +433,16 @@ class ElevatorInterface(QtCore.QObject):
         self.hasToSolve = True
 
 
-class Interface(QtGui.QWidget):
+class ElevatorWindow(QtGui.QWidget):
     """
-    Class that should hold the information for the elevator. Currently only has the interface but in the future it should hold the stats aswell.
+    Class that controls the interaction between the elevator interface and its visualizer. Also holds a stats panel
     """
     def __init__(self, parent = None):
-        super(Interface, self).__init__(parent)
+        super(ElevatorWindow, self).__init__(parent)
+
+        self.setGeometry(VisConfig.width, VisConfig.height, VisConfig.width, VisConfig.height)
+        self.setWindowTitle("Instance")
+        self.move(0, 0)
 
         self.elevatorInterface = ElevatorInterface()
         self.elevatorInterfaceVis = ElevatorInterfaceVis(VisConfig.size)
@@ -483,18 +484,6 @@ class Interface(QtGui.QWidget):
         stats = self.elevatorInterface.bridge.getStats()
         self.infoPanel.updateStats(stats)
 
-class ElevatorWindow(Interface):
-    """
-    This class just creates a window
-    """
-    def __init__(self, parent = None):
-        super(ElevatorWindow, self).__init__(parent)
-
-        self.setGeometry(VisConfig.width, VisConfig.height, VisConfig.width, VisConfig.height)
-        self.setWindowTitle("Instance")
-        self.move(0, 0)
-
-
 class InfoPanel(QtGui.QWidget):
 
     def __init__(self, labels):
@@ -529,6 +518,9 @@ class InfoPanel(QtGui.QWidget):
 
 
 class Connect(object):
+    """
+    class the holds the actual solver (encoding manager).
+    """
 
     def __init__(self):
         self.instance = SolverConfig.instance
@@ -556,9 +548,18 @@ class Connect(object):
 
         return self.solver.getFullPlan()
 
-    def solveFullPlan(self):
-        # only prints the plan cause its printed in the encoding manager
-        return self.solver.solveFullPlan()
+    def solveFullPlan(self, printAll = True, printReqs = False):
+        actions, reqs = self.solver.solveFullPlan()
+
+        if printAll:
+            for a in actions:
+                print a
+
+            if printReqs:
+                for r in reqs:
+                    print r
+
+        return actions, reqs
 
     def getStats(self):
 

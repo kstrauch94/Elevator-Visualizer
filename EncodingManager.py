@@ -49,6 +49,8 @@ class Solver():
 
         self.checker = Checker.Checker(SolverConfig.checker)
 
+        self.model = Model()
+
         self.getInitialReqs()
 
     def get(self, val, default):
@@ -137,12 +139,8 @@ class Solver():
                 if atom.arguments[0].name == "request":
                     self.reqs.val.append(atom)
 
-        if os.path.isfile(SolverConfig.checker):
-            # check model
-            # convert shown atoms (which should be the actions) into a list of strings
-            self.checker.checkList(self.instance, [a.__str__() for a in self.completePlan])
-            self.checkErrors.val = self.checker.shownAtoms
-
+        self.model.actions = self.completePlan
+        self.model.requests = self.reqs.val
 
         if SolverConfig.printAtoms:
             self.printAtoms(model.symbols(atoms=True))
@@ -170,34 +168,44 @@ class Solver():
 
         return elevator, actionType
 
+    def check(self):
+        """
+        Uses checker to see if the model has errors
+        """
+
+        if os.path.isfile(SolverConfig.checker):
+            # check model
+            # convert shown atoms (which should be the actions) into a list of strings
+            self.checker.checkList(self.instance, [a.__str__() for a in self.model.actions])
+            self.checkErrors.val = self.checker.shownAtoms
+
     def callSolver(self, step=None):
         """
         This is the main call to the solver. Parameter step is used for solve calls after the first one.
-        :param step: Must be the amount of steps that were already executed. Adds the action up to this number to the history. Leave as None for the first call.
-        :return: void
+        :param step: Must be the amount of steps that were already executed. Adds the actionS up to this number to
+                     the history. Leave as None for the first call.
         """
         print "Solving... \n"
         if step is not None and self.solved:
             self.updateHistory(step)
         self.solve()
+        self.check()
         #self.stats()
         print "Finished Solving.\n"
 
     def solveFullPlan(self):
         """
-        Use this to only solve and print the full plan
+        Use this to solve once and return the plan and requests. Does not work for online solving.
         """
-
         self.solve()
-        for a in self.completePlan:
-            print a
+        return self.completePlan, self.reqs.val
 
     def getFullPlan(self):
         """
-        This returns the full plan as a dictionary. Each key is the time step. The value of the key is a list of lists that contain the elevator ID and the action
+        This returns the full plan as a dictionary. Each key is the time step. The value of the key is a list of lists
+        that contain the elevator ID and the action
         :return: Plan dictionary
         """
-
         plan = {}
 
         for action in self.completePlan:
@@ -217,7 +225,6 @@ class Solver():
         """
         Updates the History of actions that will be added to the solver as externals
         :param step: The last time step where actions will be added
-        :return: void
         """
 
         for action in self.completePlan:
@@ -253,7 +260,7 @@ class Solver():
 
     def addRequest(self, reqtype, time, params):
         """
-        Create a clingo function object for the request and add it  to the request list of externals.
+        Create a clingo function object for the request and add it to the request list of externals.
 
         :param reqtype: either call or deliver, it should be as the ones defined in the Constants.py file.
         :param time: time at which the request is added
@@ -278,7 +285,7 @@ class Solver():
 
     def stats(self):
         """
-        Update the stats. Called after each solver call.
+        Update the stats. Called after each solver call. Currently, clingo stats are not working.
         :return: void
         """
         statistics = json.loads(json.dumps(self.control.statistics, sort_keys=True, indent=4, separators=(',', ': ')))
@@ -326,6 +333,17 @@ class Solver():
         return [self.totalSolvingTime,
                 self.totalGroundingTime,
                 self.checkErrors]
+
+
+class Model():
+    """
+    Simple class to hold the actions and the requests
+    """
+
+    def __init__(self):
+        self.actions = None
+        self.requests = None
+
 
 
 class Stat(object):
