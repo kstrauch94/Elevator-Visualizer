@@ -1,6 +1,6 @@
 from PyQt4 import QtGui, QtCore
 
-import VisConfig
+import VisConfig, SolverConfig
 import ElevatorWindow, Widgets
 from Constants import *
 
@@ -61,7 +61,7 @@ class MainWindow(QtGui.QMainWindow):
         loadInstanceAction.setShortcut("Ctrl+I")
         loadMenu.addAction(loadInstanceAction)
 
-        loadEncodingAction = QtGui.QAction("Load Encoding", self)
+        loadEncodingAction = QtGui.QAction("Load Encoding/Solver", self)
         loadEncodingAction.triggered.connect(self.loadEncoding)
         loadEncodingAction.setShortcut("Ctrl+E")
         loadMenu.addAction(loadEncodingAction)
@@ -79,8 +79,31 @@ class MainWindow(QtGui.QMainWindow):
         planWindow.setShortcut("Ctrl+P")
         windowMenu.addAction(planWindow)
 
+        ### Connect Menu
+        connectMenu = self.menuBar.addMenu("Connect")
+
+        connect = QtGui.QAction("Initialize Connection", self)
+        connect.triggered.connect(self.initialize)
+        connectMenu.addAction(connect)
+
+        setConnInfo = QtGui.QAction("Set host/port", self)
+        setConnInfo.triggered.connect(self.setConnectionInfo)
+        connectMenu.addAction(setConnInfo)
+
         self.mainVbox.addWidget(self.menuBar)
 
+    def initialize(self):
+        self.elevatorWindow.initialize()
+
+    def setConnectionInfo(self):
+        text, ok = QtGui.QInputDialog.getText(self, "Connection Details", "Enter HOST:PORT")
+
+        if ok:
+            text = text.split(":")
+            host = str(text[0])
+            port = int(text[1])
+            print host, port
+            self.elevatorWindow.elevatorInterface.setConnectionInfo(host, port)
 
     def loadInstance(self):
 
@@ -90,21 +113,15 @@ class MainWindow(QtGui.QMainWindow):
         self.instanceInfo["instance"].setText("Instance : " + instance)
 
         if instance != "":
-            self.elevatorWindow.elevatorInterface.bridge.instance = instance
-            self.reset()
+            self.elevatorWindow.elevatorInterface.setInstance(instance)
+            self.hardReset()
 
     def loadEncoding(self):
+        text, ok = QtGui.QInputDialog.getText(self, "Encoding", "Enter Encoding/Solver Details: ")
 
-        dialog = QtGui.QFileDialog()
-        encoding = str(dialog.getOpenFileName(self, "Open File", os.getcwd(), "All files (*.*)", options=QtGui.QFileDialog.DontUseNativeDialog))
-        self.instanceInfo["encoding"].setText("Encoding : " + encoding)
-
-
-        if encoding != "":
-            self.elevatorWindow.elevatorInterface.bridge.encoding = encoding
-            self.reset()
-
-
+        if ok:
+            if self.elevatorWindow.elevatorInterface.sendEncoding(text):
+                self.reset()
 
     def prepareButtons(self):
         #creates all buttons and adds them to the Hbox
@@ -140,23 +157,23 @@ class MainWindow(QtGui.QMainWindow):
         self.mainVbox.addLayout(self.buttonsHbox)
 
     def addCallRequest(self):
+        if self.elevatorWindow.hasInitialized:
+            floors = self.elevatorWindow.elevatorInterface.floors
 
-        floors = self.elevatorWindow.elevatorInterface.floors
+            ok, type, floor = Widgets.CallRequestDialog.getRequest(floors, self)
 
-        ok, type, floor = Widgets.CallRequestDialog.getRequest(floors, self)
-
-        if ok:
-            self.elevatorWindow.elevatorInterface.addRequest(REQ_CALL, type, floor)
+            if ok:
+                self.elevatorWindow.addRequest(REQ_CALL, type, floor)
 
     def addDeliverRequest(self):
+        if self.elevatorWindow.hasInitialized:
+            floors = self.elevatorWindow.elevatorInterface.floors
+            elevs = self.elevatorWindow.elevatorInterface.elevatorCount
 
-        floors = self.elevatorWindow.elevatorInterface.floors
-        elevs = self.elevatorWindow.elevatorInterface.elevatorCount
+            ok, elev, floor = Widgets.DeliverRequestDialog.getRequest(floors, elevs, self)
 
-        ok, elev, floor = Widgets.DeliverRequestDialog.getRequest(floors, elevs, self)
-
-        if ok:
-            self.elevatorWindow.elevatorInterface.addRequest(REQ_DELIVER, elev, floor)
+            if ok:
+                self.elevatorWindow.addRequest(REQ_DELIVER, elev, floor)
 
 
     def next(self):
@@ -195,8 +212,7 @@ class MainWindow(QtGui.QMainWindow):
         #info is set in the setInterface function
         self.instanceInfo = {}
 
-        self.instanceInfo["encoding"] = QtGui.QLabel("Encoding : " + self.elevatorWindow.elevatorInterface.bridge.encoding)
-        self.instanceInfo["instance"] = QtGui.QLabel("Instance : " + self.elevatorWindow.elevatorInterface.bridge.instance)
+        self.instanceInfo["instance"] = QtGui.QLabel("Instance : " + SolverConfig.instance)
 
         text = "floors : " + str(self.elevatorWindow.elevatorInterface.floors)
         self.instanceInfo["floors"] = QtGui.QLabel(text, self)
@@ -211,7 +227,6 @@ class MainWindow(QtGui.QMainWindow):
         self.instanceInfo["Requests Completed"] = QtGui.QLabel("Requests Completed : " + str(self.elevatorWindow.elevatorInterface.requestCompleted), self)
 
 
-        self.ConfigInfoVbox.addWidget(self.instanceInfo["encoding"])
         self.ConfigInfoVbox.addWidget(self.instanceInfo["instance"])
         self.ConfigInfoVbox.addWidget(self.instanceInfo["floors"])
         self.ConfigInfoVbox.addWidget(self.instanceInfo["agents"])
@@ -229,6 +244,15 @@ class MainWindow(QtGui.QMainWindow):
     def reset(self):
 
         self.elevatorWindow.reset()
+
+        self.planWindow.reset()
+        self.requestWindow.reset()
+
+        self.updateInfo()
+
+    def hardReset(self):
+
+        self.elevatorWindow.hardReset()
 
         self.planWindow.reset()
         self.requestWindow.reset()

@@ -9,13 +9,24 @@ from windows.Constants import *
 
 class Solver():
 
-    def __init__(self, encoding, instance):
-        self.encoding = encoding
-        self.instance = instance
-
+    def __init__(self, encoding=None, instance=None):
         self.control = clingo.Control(SolverConfig.options)
-        self.control.load(instance)
-        self.control.load(encoding)
+
+        self.encoding = None
+        if encoding is not None:
+            self.encoding = encoding
+            self.control.load(encoding)
+
+        self.instance = None
+        self.instanceType = None
+        if instance is not None:
+            if os.path.isfile(instance):
+                self.instance = instance
+                self.control.load(instance)
+                self.instanceType = "file"
+            else:
+                self.loadInstanceStr(instance)
+                self.instanceType = "str"
 
         self.grounded = 0
 
@@ -23,7 +34,9 @@ class Solver():
         self.imax = self.get(self.control.get_const("imax"), clingo.Number(100))
         self.istop = self.get(self.control.get_const("istop"), clingo.String("SAT"))
 
-        self.elevAmt = self.control.get_const("agents").number
+        self.elevAmt = None
+        self.floors = None
+        self.startPos = None
 
         self.step, self.ret = 1, None
         self.solved = False
@@ -45,17 +58,26 @@ class Solver():
         self.checkErrors = CheckerStat(name="Checker Status")
         self.reqs = RequestStat(name="Current Requests")
 
-        self.groundStart()
-
-        self.checker = Checker.Checker(SolverConfig.checker)
-
         self.model = Model()
 
         self.getInitialReqs()
 
+    def loadInstance(self, instance):
+        self.instance = instance
+        self.control.load(self.instance)
+        self.instanceType = "file"
+
+    def loadInstanceStr(self, instanceStr):
+        self.instanceStr = instanceStr
+        self.control.add("base", [], instanceStr)
+        self.instanceType = "str"
+
+    def loadEncoding(self, encoding):
+        self.encoding = encoding
+        self.control.load(self.encoding)
+
     def get(self, val, default):
         return val if val != None else default
-
 
     def getInitialReqs(self):
 
@@ -67,6 +89,16 @@ class Solver():
                 if atom.name == "holds":
                     if atom.arguments[0].name == "request":
                         self.reqs.val.append(atom)
+
+    def getBaseValues(self):
+        self.floors = self.control.get_const("floors").number
+        self.elevAmt = self.control.get_const("agents").number
+
+        self.startPos = []
+        for i in range(1, self.elevAmt + 1):
+            self.startPos.append(self.control.get_const("start{}".format(i)).number)
+
+        self.getInitialReqs()
 
     def groundStart(self):
         """
@@ -88,10 +120,11 @@ class Solver():
         for move in self.moved:
             self.control.assign_external(move, True)
 
-        for req in self.newRequests:
-            self.control.assign_external(req, True)
-
-        #self.newRequests = []
+        if self.newRequests != []:
+            if self.grounded == 0:
+                self.groundStart()
+            for req in self.newRequests:
+                self.control.assign_external(req, True)
 
         while (self.step < self.imax.number) and\
                 (self.ret == None or (self.istop.string == "SAT" and not self.ret.satisfiable)):
@@ -174,10 +207,14 @@ class Solver():
         """
 
         if os.path.isfile(SolverConfig.checker):
-            # check model
-            # convert shown atoms (which should be the actions) into a list of strings
-            self.checker.checkList(self.instance, [a.__str__() for a in self.model.actions])
-            self.checkErrors.val = self.checker.shownAtoms
+            checker = Checker.Checker(SolverConfig.checker)
+            if self.instance is not None:
+                # check model
+                # convert shown atoms (which should be the actions) into a list of strings
+                checker.checkList(self.instance, [a.__str__() for a in self.model.actions])
+                self.checkErrors.val = self.checker.shownAtoms
+
+
 
     def callSolver(self, step=None):
         """
@@ -330,9 +367,53 @@ class Solver():
 
     def getStats(self):
         # order matters if being used by the InfoPanel class of the visualizer
-        return [self.totalSolvingTime,
-                self.totalGroundingTime,
-                self.checkErrors]
+        return {self.totalSolvingTime.name :  self.totalSolvingTime.string(),
+                self.totalGroundingTime.name :  self.totalGroundingTime.string(),
+                self.checkErrors.name : self.checkErrors.string()}
+
+    def reset(self):
+        self.control = clingo.Control(SolverConfig.options)
+        if self.instanceType == "str":
+            self.loadInstanceStr(self.instanceStr)
+        elif self.instanceType == "file":
+            self.loadInstance(self.instance)
+
+        self.control.load(self.encoding)
+
+        self.grounded = 0
+
+        # self.imin = self.get(self.control.get_const("imin"), clingo.Number(0))
+        self.imax = self.get(self.control.get_const("imax"), clingo.Number(100))
+        self.istop = self.get(self.control.get_const("istop"), clingo.String("SAT"))
+
+        self.elevAmt = None
+        self.floors = None
+        self.startPos = None
+
+        self.step, self.ret = 1, None
+        self.solved = False
+
+        self.grounded = 0
+        self.solvingStep = 0
+
+        # lists for externals
+        self.moved = []
+        self.newRequests = []
+
+        # full solution for the last solve call
+        self.completePlan = []
+
+        # stat recording vars
+        self.totalSolvingTime.val = 0
+        self.totalGroundingTime.val = 0
+        self.checkErrors.val = None
+        self.reqs.val = None
+
+        self.model = Model()
+
+        self.getInitialReqs()
+
+
 
 
 class Model():
