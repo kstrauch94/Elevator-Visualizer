@@ -2,7 +2,7 @@ import socket
 import time
 import json
 
-import SolverConfig
+import VisConfig
 
 MSG_SIZE = 4096
 
@@ -42,8 +42,8 @@ class MySocket(object):
     def __init__(self):
 
         self._socket = None
-        self._host = "127.0.0.1"
-        self._port = 6000
+        self._host = VisConfig.host
+        self._port = VisConfig.port
         self.tries = 5
 
     def setHost(self, host):
@@ -106,7 +106,7 @@ class VisSocket(MySocket):
         self.startPos = None
         self.elevAmt = None
 
-        self.instance = SolverConfig.instance
+        self.instance = VisConfig.instance
         with open(self.instance, 'r') as myfile:
             self.instanceStr = myfile.read()
 

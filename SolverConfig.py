@@ -1,10 +1,6 @@
 # ASP configuration
 
-#list of encodings and instance
-
 encoding = "encodings/Elevator.lp"
-
-instance = "instances/Elevatorinstance.lp"
 
 # Checker encoding
 checker = "encodings/checker.lp"

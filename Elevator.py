@@ -3,10 +3,9 @@ import sys
 from PyQt4 import QtGui
 from argparse import RawTextHelpFormatter
 
-import SolverConfig
+import VisConfig
+from windows import Constants
 from windows import MainWindow
-from windows import ElevatorWindow
-
 
 def writeAnswer(instance, actions, reqs):
     """
@@ -41,29 +40,37 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description=desc, formatter_class=RawTextHelpFormatter)
 
-    parser.add_argument("-o", "--off-line", help="1 : Solve and print the full plan without the visualizer then exit.\n2 : Also print the request atoms.\n3 : Write answer to a file", action="count", default=0)
-    parser.add_argument("-e", "--encoding", help="Encoding file name to use initially.", default=SolverConfig.encoding)
-    parser.add_argument("-i", "--instance", help="Instance file name to use initially.", default=SolverConfig.instance)
+    parser.add_argument("-o", "--off-line", help="Requires the cling module\n1 : Solve and print the full plan without the visualizer then exit.\n2 : Also print the request atoms.\n3 : Write answer to a file", action="count", default=0)
+    parser.add_argument("-m", "--local-mode", help="Set initial connection mode to local instead of socket", action="store_true")
+    parser.add_argument("-i", "--instance", help="Instance file name to use initially.", default=VisConfig.instance)
+    parser.add_argument("-H", "--host", help="Host IP address", default=VisConfig.host)
+    parser.add_argument("-P", "--port", help="Port for the server", default=VisConfig.port)
 
 
     args = parser.parse_args()
 
 
-    SolverConfig.encoding = args.encoding
-    SolverConfig.instance = args.instance
+    VisConfig.instance = args.instance
+    VisConfig.host = args.host
+    VisConfig.port = args.port
+
+    connectionMode = Constants.SOCKET
+    if args.local_mode:
+        connectionMode = Constants.LOCAL
 
 
     if args.off_line > 0:
         print "Solving encoding"
-        bridge = ElevatorWindow.Connect()
+        import LocalClient
+        bridge = LocalClient.Connect(VisConfig.instance)
         printAll = args.off_line < 3
         actions, reqs = bridge.solveFullPlan(printAll, args.off_line > 1)
         print "\n---Finished---\n"
         if args.off_line > 2:
-            writeAnswer(SolverConfig.instance, actions, reqs)
+            writeAnswer(VisConfig.instance, actions, reqs)
     else:
         app = QtGui.QApplication(sys.argv)
-        gui = MainWindow.MainWindow()
+        gui = MainWindow.MainWindow(connectionMode)
         sys.exit(app.exec_())
 
 

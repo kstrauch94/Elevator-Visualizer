@@ -1,3 +1,10 @@
+# default instance
+instance = "instances/Elevatorinstance.lp"
+
+# Socket Client Configuration
+
+host = "127.0.0.1"
+port = 6000
 
 #Window Configuration
 

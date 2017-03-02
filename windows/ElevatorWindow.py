@@ -2,11 +2,10 @@ import os
 import time
 from PyQt4 import QtGui, QtCore
 
-import EncodingManager
-import SolverConfig
 import VisConfig
 from Constants import *
 import VisClient
+import LocalClient
 
 
 class ElevatorVis(QtGui.QWidget):
@@ -239,8 +238,8 @@ class ElevatorInterface(QtCore.QObject):
 
         super(ElevatorInterface, self).__init__()
 
-        #self.bridge = Connect()
-        self.bridge = VisClient.VisSocket()
+        self.solverConns = {SOCKET: VisClient.VisSocket(), LOCAL: LocalClient.Connect()}
+        self.mode = LOCAL
 
         self.elevatorCount = None
         self.floors = None
@@ -259,7 +258,13 @@ class ElevatorInterface(QtCore.QObject):
 
         self.hasToSolve = True
 
-        self.setInstance(SolverConfig.instance)
+        self.setInstance(VisConfig.instance)
+
+    def setMode(self, mode):
+        if mode != LOCAL and mode != SOCKET:
+            print "Invalid mode: " + str(mode)
+            return 0
+        self.mode = mode
 
     def setConnectionInfo(self, host, port):
 
@@ -499,6 +504,9 @@ class ElevatorInterface(QtCore.QObject):
         except (TypeError, KeyError):
             return "No Requests"
 
+    @property
+    def bridge(self):
+        return self.solverConns[self.mode]
 
 class ElevatorWindow(QtGui.QWidget):
     """
@@ -620,65 +628,3 @@ class InfoPanel(QtGui.QWidget):
                     # update label value
                     self.stats[s].setText(stats[s])
 
-
-class Connect(object):
-    """
-    class the holds the actual solver (encoding manager).
-    """
-
-    def __init__(self):
-        self.instance = SolverConfig.instance
-        self.encoding = SolverConfig.encoding
-        self.solver = EncodingManager.Solver(self.encoding, self.instance)
-
-        self.elevatorCount = self.solver.control.get_const("agents").number
-        self.floors = self.solver.control.get_const("floors").number
-
-    def getElevatorAmt(self):
-
-        return self.solver.control.get_const("agents").number
-
-    def getFloorAmt(self):
-
-        return self.solver.control.get_const("floors").number
-
-    def startingPosition(self, elev):
-
-        return self.solver.control.get_const("start%d" % (elev)).number
-
-    def nextMoves(self, step):
-
-        self.solver.callSolver(step)
-
-        return self.solver.getFullPlan()
-
-    def solveFullPlan(self, printAll = True, printReqs = False):
-        actions, reqs = self.solver.solveFullPlan()
-
-        if printAll:
-            for a in actions:
-                print a
-
-            if printReqs:
-                for r in reqs:
-                    print r
-
-        return actions, reqs
-
-    def getStats(self):
-
-        return self.solver.getStats()
-
-    def getRequests(self):
-
-        return self.solver.getRequestInfo()
-
-    def addRequest(self, type, time, params):
-
-        self.solver.addRequest(type, time, params)
-
-    def reset(self):
-        self.solver = EncodingManager.Solver(self.encoding, self.instance)
-
-        self.elevatorCount = self.solver.control.get_const("agents").number
-        self.floors = self.solver.control.get_const("floors").number

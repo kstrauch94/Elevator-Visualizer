@@ -1,6 +1,6 @@
 from PyQt4 import QtGui, QtCore
 
-import VisConfig, SolverConfig
+import VisConfig
 import ElevatorWindow, Widgets
 from Constants import *
 
@@ -12,8 +12,9 @@ class MainWindow(QtGui.QMainWindow):
     It also creates the window that displays the instance and the plan + request windows.
     """
 
-    def __init__(self):
+    def __init__(self, connMode):
         super(MainWindow, self).__init__()
+        self.connMode = connMode
 
         self.setGeometry(VisConfig.width, VisConfig.height, VisConfig.width, VisConfig.height)
         self.setWindowTitle("Elevator")
@@ -38,6 +39,7 @@ class MainWindow(QtGui.QMainWindow):
 
     def initWindows(self):
         self.elevatorWindow = ElevatorWindow.ElevatorWindow()
+        self.elevatorWindow.elevatorInterface.setMode(self.connMode)
         self.elevatorWindow.show()
 
         self.requestWindow = Widgets.RequestsWindow()
@@ -120,6 +122,7 @@ class MainWindow(QtGui.QMainWindow):
         text, ok = QtGui.QInputDialog.getText(self, "Encoding", "Enter Encoding/Solver Details: ")
 
         if ok:
+            text = str(text)
             if self.elevatorWindow.elevatorInterface.sendEncoding(text):
                 self.reset()
 
@@ -212,7 +215,7 @@ class MainWindow(QtGui.QMainWindow):
         #info is set in the setInterface function
         self.instanceInfo = {}
 
-        self.instanceInfo["instance"] = QtGui.QLabel("Instance : " + SolverConfig.instance)
+        self.instanceInfo["instance"] = QtGui.QLabel("Instance : " + VisConfig.instance)
 
         text = "floors : " + str(self.elevatorWindow.elevatorInterface.floors)
         self.instanceInfo["floors"] = QtGui.QLabel(text, self)

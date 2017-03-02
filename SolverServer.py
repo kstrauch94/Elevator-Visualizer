@@ -1,35 +1,10 @@
 import json
 import SocketServer
+import argparse
 
 import EncodingManager
 import SolverConfig
-
-MSG_SIZE = 4096
-
-# Message types
-# From client
-BASE = "base"
-SOLVE = "solve"
-ADDREQS = "addreqs"
-RESET = "reset"
-ENCODING = "encoding"
-# From server
-SUCCESS = "success"
-FAIL = "failure"
-# Message end marker
-DONE = "147258369"
-
-# Dictionary Keys
-ACTIONS = "actions"
-REQUESTS = "requests"
-STATS = "stats"
-ELEVAMT = "elevamt"
-FLOORAMT = "flooramt"
-STARTPOS = "startpos"
-
-# Request types
-REQ_CALL     = "call"
-REQ_DELIVER  = "deliver"
+from ServerConfig import *
 
 class SolverHandler(SocketServer.StreamRequestHandler):
 
@@ -157,12 +132,19 @@ class SolverHandler(SocketServer.StreamRequestHandler):
 
 
 if __name__ == "__main__":
-    host = "127.0.0.1"
-    port = 6000
+    parser = argparse.ArgumentParser(description="Server for a clingo solver")
+
+    parser.add_argument("-e", "--encoding", help="Encoding file name to use initially.", default=SolverConfig.encoding)
+    parser.add_argument("-H", "--host", help="Host IP address", default=HOST)
+    parser.add_argument("-P", "--port", help="Port for the server", default=PORT)
+
+    args = parser.parse_args()
+    host = args.host
+    port = args.port
+    encoding = args.encoding
 
     print "Initializing server with host: " + host + " and port: " + str(port)
     server = SocketServer.TCPServer((host, port), SolverHandler)
-    server.solver = EncodingManager.Solver(SolverConfig.encoding)
-
+    server.solver = EncodingManager.Solver(encoding)
 
     server.serve_forever()
