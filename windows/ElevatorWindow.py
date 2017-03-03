@@ -432,6 +432,9 @@ class ElevatorInterface(QtCore.QObject):
             string = "call({}) to {}".format(params[0], params[1])
         elif type == REQ_DELIVER:
             string = "deliver({}) from {}".format(params[0], params[1])
+        else:
+            print "Request type is invalid: " + str(type)
+            return 0
 
         if self.highestStep not in self.addedRequests:
             self.addedRequests[self.highestStep] = [string]
@@ -540,6 +543,9 @@ class ElevatorWindow(QtGui.QWidget):
 
     def initialize(self):
 
+        if self.hasInitialized:
+            return 0
+
         if not self.elevatorInterface.initialize():
             print "Could not Initialize. Can't connect to server."
             return 0
@@ -591,6 +597,8 @@ class ElevatorWindow(QtGui.QWidget):
 
         self.elevatorInterface.hardReset()
         self.elevatorInterfaceVis.reset()
+
+        self.hasInitialized = False
 
         self.initialize()
 
