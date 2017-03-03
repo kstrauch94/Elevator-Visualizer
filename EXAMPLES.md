@@ -3,19 +3,32 @@
 
 ## Visualizer
 
+The Visualizer can communicate with a local solver or via sockets. A sample server is provided in the server directory. To start the server go to the directory and use the command:
+
+```
+$ python SolverServer.py
+```
+
 With the default configuration of the visualizer one can run the following command:
 ```
 $ python Elevator.py
 ```
 
-This pops up 2 windows. One contains labeled buttons and one contains the visualization of the instance. It has some elevator shafts with the elevator(red square) currently sitting in some floor. Pressing the next action button moves the elevator. After clicking the button a couple times, the square will eventually turn green. This means that a "serve" action was executed. Images of the last executed action can be seen at the bottom of the elevator shaft. 
+This pops up 2 windows. One contains labeled buttons and one contains nothing. To start the visualization go to the connections tab and press "Initialize Connection". It has some elevator shafts with the elevator(red square) currently sitting in some floor. Pressing the next action button moves the elevator. After clicking the button a couple times, the square will eventually turn green. This means that a "serve" action was executed. Images of the last executed action can be seen at the bottom of the elevator shaft. 
 
 Running the command
 ```
 $ python Elevator.py -i instances/Elevatorinstance2.lp
 ```
 
-to change the default instance to "instances/Elevatorinstance2.lp" opens 2 windows. One has the familiar buttons and the other now has 4 elevator shafts with the elevators sitting in the first floor. 
+changes the default instance to "instances/Elevatorinstance2.lp". The visualization window now has 4 elevator shafts with the elevators sitting in the first floor. 
+
+To use the visualizer without having to start the server use the -m option:
+```
+$ python Elevator.py -m
+```
+
+For more command line options use the -h help command.
 
 ## Checker
 
@@ -25,9 +38,9 @@ $ python Checker -h
 ```
 explains the arguments that can be given.
 
-Now, use the following command from the home directory of the packgage:
+Now, use the following command from the Server directory (which contains the checker) of the packgage:
 ```
-$ python Checker.py encodings/checker.lp instances/Elevatorinstance.lp -a "do(elevator(1),move(1),1)" "do(elevator(1),move(-1),2)" "do(elevator(1),move(-1),3)" 
+$ python Checker.py encodings/checker.lp ../instances/Elevatorinstance.lp -a "do(elevator(1),move(1),1)" "do(elevator(1),move(-1),2)" "do(elevator(1),move(-1),3)" 
 ```
 
 we get the following output:
@@ -40,7 +53,7 @@ The input expressed that we want to use the checker "checker.lp" located in the 
 
 Running the command:
 ```
-$ python Checker.py encodings/checker.lp instances/Elevatorinstance.lp -a "do(elevator(1),move(-1),1)" "do(elevator(1),move(-1),2)" "do(elevator(1),move(-1),3)" 
+$ python Checker.py encodings/checker.lp ../instances/Elevatorinstance.lp -a "do(elevator(1),move(-1),1)" "do(elevator(1),move(-1),2)" "do(elevator(1),move(-1),3)" 
 ```
 
 now yields the output:
