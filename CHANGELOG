@@ -1,9 +1,16 @@
+V 0.5
+
+* upt Connection to the solver can now be local (as before) or via sockets
+
+* add New connection tab to manage connection properties
+* add -m option to start solver on local connection
+* add -o parameter can now print holds for requests and create a file with the solution
+
 V 0.4
 
 * add New window that shows completed and added requests
 * add New window that shows the complete plan
 * add More information in the main window
-* add -o parameter can now print holds for requests and create a file with the solution
 
 * upt Initial requests now appear without having to solve first
 
