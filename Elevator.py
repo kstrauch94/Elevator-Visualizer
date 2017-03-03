@@ -7,6 +7,7 @@ import VisConfig
 from windows import Constants
 from windows import MainWindow
 
+
 def writeAnswer(instance, actions, reqs):
     """
     Writes the answer returned from the encoding manager to a file.
@@ -61,8 +62,10 @@ if __name__ == "__main__":
 
     if args.off_line > 0:
         print "Solving encoding"
-        import LocalClient
+        from Solver import LocalClient
+
         bridge = LocalClient.Connect(VisConfig.instance)
+        bridge.createSolver()
         printAll = args.off_line < 3
         actions, reqs = bridge.solveFullPlan(printAll, args.off_line > 1)
         print "\n---Finished---\n"

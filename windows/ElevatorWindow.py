@@ -2,10 +2,10 @@ import os
 import time
 from PyQt4 import QtGui, QtCore
 
+import VisClient
 import VisConfig
 from Constants import *
-import VisClient
-import LocalClient
+from Solver import LocalClient
 
 
 class ElevatorVis(QtGui.QWidget):

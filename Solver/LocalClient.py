@@ -10,6 +10,9 @@ class Connect(object):
         self.instance = instance
         self.encoding = encoding
 
+    def createSolver(self):
+        self.solver = EncodingManager.Solver(self.encoding, self.instance)
+
     def sendBaseRequest(self, instance):
         self.instance = instance
         self.solver = EncodingManager.Solver(self.encoding)

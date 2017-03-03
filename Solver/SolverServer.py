@@ -1,10 +1,11 @@
-import json
 import SocketServer
 import argparse
+import json
 
 import EncodingManager
 import SolverConfig
 from ServerConfig import *
+
 
 class SolverHandler(SocketServer.StreamRequestHandler):
 
