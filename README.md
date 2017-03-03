@@ -6,14 +6,16 @@ PyQt4 can be found at: https://riverbankcomputing.com/software/pyqt/download
 Clingo can be found at: https://potassco.org/
 
 ## Visualizer
+The visualizer can be configured in the VisCofig.py file. To start the visualizer try:
+```
+$ python Elevator.py
+```
 
-The visualizer can be configured in the VisCofig.py and SolverConfig.py files. The important variables in the SolverConfig.py file are the encoding and the instance. The encoding variable must be a path to the encoding that is to be used in the solving process the visualization. These variables can also be set with command line arguments. A separate window will be created for every encoding in the list. The instance must be one file. The initial size of the window aswell as the size of the elevators can be changed in the VisConfig.py file.
+The command opens a visualization window and a control window with several buttons. Press "Initialize Connection" to start visualizing. If using the server make sure to start it.
 
-Any extra encoding files (such as strategies) can be included with the #include directive in the encoding file.
+The visualization has vertical rectangle divided into squares as the elevator shaft. The elevator is a red square. The last action performed is visualized below by either an arrow or a rectangle. An "N" is displayed if no action was taken. Stats might be displayed on the right side of the window.
 
-The visualization has vertical rectangle divided into squares as the elevator shaft. The elevator is a red square. The last action performed is visualized below by either an arrow or a rectangle. An "N" is displayed if no action was taken. To the right there are stats about the last solved call such as the solving time.
-
-It is also possible to just solve the instance with the encodings provided in the Config.py file or by arguments, and print the full plan without visualizing by using the -o command.
+It is also possible to just solve the instance with the encodings provided in the Config.py file or by arguments, and print the full plan without visualizing by using the -o command. (clingo is required)
 
 ```
 $ python Elevator.py -o
@@ -21,16 +23,17 @@ $ python Elevator.py -o
 
 ## Encoding and Instance specification
 
+The encodings and instances specification depend on the system being used. The following specifications are for the built in systems.
+
 #### When visualizing a plan the plan file must have:
 
 - "do(E, A, t)" action predicates
 - (optional) holds(request(Type,Floor), Time) predicates for the requests that are active at some timepoint
 
-#### The clingo encoding specified in the Config.py file must have the following properties:
+#### The clingo encoding specified in the SolverConfig.py file must have the following properties:
 
 - The actions must be: move(1), move(-1), serve, and wait
 - The action execution predicate must have the form "do(E, A, t)" where E is of the form "elevator(N)" with N being a integer, A is an action as the ones described above and t the timestep. E.g. do(elevator(1),serve,5).
-- no #minimize statements
 - The usual clingo directives for incremental solving (including the query(t) external)
 
 #### Additional properties for online planning:

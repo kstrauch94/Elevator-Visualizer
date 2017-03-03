@@ -24,7 +24,7 @@ class SolverHandler(SocketServer.StreamRequestHandler):
         if reply in self.replyFunction:
             self.replyFunction[reply]()
         else:
-            msg = "Received Message : " + reply + " is not a valid request.\n" + DONE + "\n"
+            msg = FAIL + "\n" + "Received Message : " + reply + " is not a valid request" + "\n" + DONE + "\n"
             self.request.sendall(msg)
 
         print "Finishing connection..."
