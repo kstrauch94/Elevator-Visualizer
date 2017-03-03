@@ -24,8 +24,8 @@ class Checker(object):
         Checks the plan given as a string as outputted by clingo without incremental solving(actions separated by a white space.
         It replaces the whitespace in between them to a dot and then writes a file. Then the solver is called.
         :param instance: file name of instance
-        :param actions: actions separated by whitespace. Must be in the clingo input format
-                        and have the form "do(elevator(ID),A,T)" with ID and int, A an action, and T the time step
+        :param actions: actions separated by whitespace. Must be in the clingo output format
+                        and have the form "do(elevator(ID),A,T)" with ID an int, A an action, and T the time step
         :return: void
         """
         tp = tempfile.NamedTemporaryFile()

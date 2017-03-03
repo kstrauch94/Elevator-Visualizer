@@ -9,11 +9,12 @@ import os
 class MainWindow(QtGui.QMainWindow):
     """
     Main class. It creates a window with the parameters in the VisConfig.py file.
-    It also creates the buttons and the windows for the encodings in the VisConfig.py file.
+    It also creates the window that displays the instance and the plan + request windows.
     """
 
-    def __init__(self):
+    def __init__(self, connMode):
         super(MainWindow, self).__init__()
+        self.connMode = connMode
 
         self.setGeometry(VisConfig.width, VisConfig.height, VisConfig.width, VisConfig.height)
         self.setWindowTitle("Elevator")
@@ -38,13 +39,14 @@ class MainWindow(QtGui.QMainWindow):
 
     def initWindows(self):
         self.elevatorWindow = ElevatorWindow.ElevatorWindow()
+        self.elevatorWindow.elevatorInterface.setMode(self.connMode)
         self.elevatorWindow.show()
 
         self.requestWindow = Widgets.RequestsWindow()
 
         self.planWindow = Widgets.PlanWindow()
 
-        #Conections
+        #Conections for updates
         self.elevatorWindow.elevatorInterface.planChangedSignal.connect(self.planWindow.setPlan)
         self.elevatorWindow.elevatorInterface.requestChangedSignal.connect(self.requestWindow.setRequests)
 
@@ -61,7 +63,7 @@ class MainWindow(QtGui.QMainWindow):
         loadInstanceAction.setShortcut("Ctrl+I")
         loadMenu.addAction(loadInstanceAction)
 
-        loadEncodingAction = QtGui.QAction("Load Encoding", self)
+        loadEncodingAction = QtGui.QAction("Load Encoding/Solver", self)
         loadEncodingAction.triggered.connect(self.loadEncoding)
         loadEncodingAction.setShortcut("Ctrl+E")
         loadMenu.addAction(loadEncodingAction)
@@ -79,28 +81,62 @@ class MainWindow(QtGui.QMainWindow):
         planWindow.setShortcut("Ctrl+P")
         windowMenu.addAction(planWindow)
 
+        ### Connect Menu
+        connectMenu = self.menuBar.addMenu("Connect")
+
+        connect = QtGui.QAction("Initialize Connection", self)
+        connect.triggered.connect(self.initialize)
+        connectMenu.addAction(connect)
+
+        setConnInfo = QtGui.QAction("Set host/port", self)
+        setConnInfo.triggered.connect(self.setConnectionInfo)
+        connectMenu.addAction(setConnInfo)
+
+        switch = QtGui.QAction("Use sockets Comms", self)
+        switch.triggered.connect(lambda: self.switch(SOCKET))
+        connectMenu.addAction(switch)
+
+        switch = QtGui.QAction("Use local Comms", self)
+        switch.triggered.connect(lambda: self.switch(LOCAL))
+        connectMenu.addAction(switch)
+
         self.mainVbox.addWidget(self.menuBar)
 
+    def initialize(self):
+        self.elevatorWindow.initialize()
+
+    def setConnectionInfo(self):
+        text, ok = QtGui.QInputDialog.getText(self, "Connection Details", "Enter HOST:PORT")
+
+        if ok:
+            text = text.split(":")
+            host = str(text[0])
+            port = int(text[1])
+            print host, port
+            self.elevatorWindow.elevatorInterface.setConnectionInfo(host, port)
+
+    def switch(self, mode):
+        self.elevatorWindow.elevatorInterface.setMode(mode)
+        self.hardReset()
 
     def loadInstance(self):
 
         dialog = QtGui.QFileDialog()
         instance = str(dialog.getOpenFileName(self, "Open File", os.getcwd(), "All files (*.*)", options=QtGui.QFileDialog.DontUseNativeDialog))
 
+        self.instanceInfo["instance"].setText("Instance : " + instance)
+
         if instance != "":
-            self.elevatorWindow.elevatorInterface.bridge.instance = instance
-            self.reset()
+            self.elevatorWindow.elevatorInterface.setInstance(instance)
+            self.hardReset()
 
     def loadEncoding(self):
+        text, ok = QtGui.QInputDialog.getText(self, "Encoding", "Enter Encoding/Solver Details: ")
 
-        dialog = QtGui.QFileDialog()
-        encoding = str(dialog.getOpenFileName(self, "Open File", os.getcwd(), "All files (*.*)", options=QtGui.QFileDialog.DontUseNativeDialog))
-
-        if encoding != "":
-            self.elevatorWindow.elevatorInterface.bridge.encoding = encoding
-            self.reset()
-
-
+        if ok:
+            text = str(text)
+            if self.elevatorWindow.elevatorInterface.sendEncoding(text):
+                self.reset()
 
     def prepareButtons(self):
         #creates all buttons and adds them to the Hbox
@@ -136,38 +172,35 @@ class MainWindow(QtGui.QMainWindow):
         self.mainVbox.addLayout(self.buttonsHbox)
 
     def addCallRequest(self):
+        if self.elevatorWindow.hasInitialized:
+            floors = self.elevatorWindow.elevatorInterface.floors
 
-        floors = self.elevatorWindow.elevatorInterface.floors
+            ok, type, floor = Widgets.CallRequestDialog.getRequest(floors, self)
 
-        ok, type, floor = Widgets.CallRequestDialog.getRequest(floors, self)
-
-        if ok:
-            self.elevatorWindow.elevatorInterface.addRequest(REQ_CALL, type, floor)
+            if ok:
+                self.elevatorWindow.addRequest(REQ_CALL, type, floor)
 
     def addDeliverRequest(self):
+        if self.elevatorWindow.hasInitialized:
+            floors = self.elevatorWindow.elevatorInterface.floors
+            elevs = self.elevatorWindow.elevatorInterface.elevatorCount
 
-        floors = self.elevatorWindow.elevatorInterface.floors
-        elevs = self.elevatorWindow.elevatorInterface.elevatorCount
+            ok, elev, floor = Widgets.DeliverRequestDialog.getRequest(floors, elevs, self)
 
-        ok, elev, floor = Widgets.DeliverRequestDialog.getRequest(floors, elevs, self)
-
-        if ok:
-            self.elevatorWindow.elevatorInterface.addRequest(REQ_DELIVER, elev, floor)
+            if ok:
+                self.elevatorWindow.addRequest(REQ_DELIVER, elev, floor)
 
 
     def next(self):
         """
-        Function is called when the "Next Action"button is pressed. It calls an update for every solver(encoding).
-        :return: Void
+        Function is called when the "Next Action" button is pressed.
         """
         self.elevatorWindow.next()
-
         self.updateInfo()
 
     def previous(self):
         """
-        Function is called when the "Previous Action" button is pressed. It calls an update for every solver(encoding).
-        :return: Void
+        Function is called when the "Previous Action" button is pressed.
         """
         self.elevatorWindow.previous()
         self.updateInfo()
@@ -186,8 +219,7 @@ class MainWindow(QtGui.QMainWindow):
 
     def prepareInterface(self):
         """
-        Creates a window for every encoding. It also extracts the floor and agent amounts and stores them.
-        :return: Void
+        Creates a window for the isntance. It also extracts information from it and initializes the information display
         """
         self.ConfigInfoVbox = QtGui.QVBoxLayout()
         self.ConfigInfoVbox.setAlignment(QtCore.Qt.AlignLeft)
@@ -195,11 +227,14 @@ class MainWindow(QtGui.QMainWindow):
         #info is set in the setInterface function
         self.instanceInfo = {}
 
+        self.instanceInfo["instance"] = QtGui.QLabel("Instance : " + VisConfig.instance)
+
         text = "floors : " + str(self.elevatorWindow.elevatorInterface.floors)
         self.instanceInfo["floors"] = QtGui.QLabel(text, self)
 
         text = "Elevators : " + str(self.elevatorWindow.elevatorInterface.elevatorCount)
         self.instanceInfo["agents"] = QtGui.QLabel(text, self)
+
         self.instanceInfo["Current Step"] = QtGui.QLabel("Current Step : " + str(self.elevatorWindow.elevatorInterface.step), self)
         self.instanceInfo["Highest Step"] = QtGui.QLabel("Highest Step : " + str(self.elevatorWindow.elevatorInterface.highestStep), self)
         self.instanceInfo["Total Plan Length"] = QtGui.QLabel("Total Plan Length : " + str(self.elevatorWindow.elevatorInterface.planLength), self)
@@ -207,7 +242,7 @@ class MainWindow(QtGui.QMainWindow):
         self.instanceInfo["Requests Completed"] = QtGui.QLabel("Requests Completed : " + str(self.elevatorWindow.elevatorInterface.requestCompleted), self)
 
 
-
+        self.ConfigInfoVbox.addWidget(self.instanceInfo["instance"])
         self.ConfigInfoVbox.addWidget(self.instanceInfo["floors"])
         self.ConfigInfoVbox.addWidget(self.instanceInfo["agents"])
         self.ConfigInfoVbox.addWidget(self.instanceInfo["Current Step"])
@@ -224,6 +259,15 @@ class MainWindow(QtGui.QMainWindow):
     def reset(self):
 
         self.elevatorWindow.reset()
+
+        self.planWindow.reset()
+        self.requestWindow.reset()
+
+        self.updateInfo()
+
+    def hardReset(self):
+
+        self.elevatorWindow.hardReset()
 
         self.planWindow.reset()
         self.requestWindow.reset()

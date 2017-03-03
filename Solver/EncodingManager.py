@@ -1,4 +1,5 @@
-import json, os
+import json
+import os
 
 import clingo
 
@@ -9,13 +10,24 @@ from windows.Constants import *
 
 class Solver():
 
-    def __init__(self, encoding, instance):
-        self.encoding = encoding
-        self.instance = instance
-
+    def __init__(self, encoding=None, instance=None):
         self.control = clingo.Control(SolverConfig.options)
-        self.control.load(instance)
-        self.control.load(encoding)
+
+        self.encoding = None
+        if encoding is not None:
+            self.encoding = encoding
+            self.control.load(encoding)
+
+        self.instance = None
+        self.instanceType = None
+        if instance is not None:
+            if os.path.isfile(instance):
+                self.instance = instance
+                self.control.load(instance)
+                self.instanceType = "file"
+            else:
+                self.loadInstanceStr(instance)
+                self.instanceType = "str"
 
         self.grounded = 0
 
@@ -23,7 +35,9 @@ class Solver():
         self.imax = self.get(self.control.get_const("imax"), clingo.Number(100))
         self.istop = self.get(self.control.get_const("istop"), clingo.String("SAT"))
 
-        self.elevAmt = self.control.get_const("agents").number
+        self.elevAmt = None
+        self.floors = None
+        self.startPos = None
 
         self.step, self.ret = 1, None
         self.solved = False
@@ -45,15 +59,26 @@ class Solver():
         self.checkErrors = CheckerStat(name="Checker Status")
         self.reqs = RequestStat(name="Current Requests")
 
-        self.groundStart()
-
-        self.checker = Checker.Checker(SolverConfig.checker)
+        self.model = Model()
 
         self.getInitialReqs()
 
+    def loadInstance(self, instance):
+        self.instance = instance
+        self.control.load(self.instance)
+        self.instanceType = "file"
+
+    def loadInstanceStr(self, instanceStr):
+        self.instanceStr = instanceStr
+        self.control.add("base", [], instanceStr)
+        self.instanceType = "str"
+
+    def loadEncoding(self, encoding):
+        self.encoding = encoding
+        self.control.load(self.encoding)
+
     def get(self, val, default):
         return val if val != None else default
-
 
     def getInitialReqs(self):
 
@@ -65,6 +90,16 @@ class Solver():
                 if atom.name == "holds":
                     if atom.arguments[0].name == "request":
                         self.reqs.val.append(atom)
+
+    def getBaseValues(self):
+        self.floors = self.control.get_const("floors").number
+        self.elevAmt = self.control.get_const("agents").number
+
+        self.startPos = []
+        for i in range(1, self.elevAmt + 1):
+            self.startPos.append(self.control.get_const("start{}".format(i)).number)
+
+        self.getInitialReqs()
 
     def groundStart(self):
         """
@@ -86,10 +121,11 @@ class Solver():
         for move in self.moved:
             self.control.assign_external(move, True)
 
-        for req in self.newRequests:
-            self.control.assign_external(req, True)
-
-        #self.newRequests = []
+        if self.newRequests != []:
+            if self.grounded == 0:
+                self.groundStart()
+            for req in self.newRequests:
+                self.control.assign_external(req, True)
 
         while (self.step < self.imax.number) and\
                 (self.ret == None or (self.istop.string == "SAT" and not self.ret.satisfiable)):
@@ -137,12 +173,8 @@ class Solver():
                 if atom.arguments[0].name == "request":
                     self.reqs.val.append(atom)
 
-        if os.path.isfile(SolverConfig.checker):
-            # check model
-            # convert shown atoms (which should be the actions) into a list of strings
-            self.checker.checkList(self.instance, [a.__str__() for a in self.completePlan])
-            self.checkErrors.val = self.checker.shownAtoms
-
+        self.model.actions = self.completePlan
+        self.model.requests = self.reqs.val
 
         if SolverConfig.printAtoms:
             self.printAtoms(model.symbols(atoms=True))
@@ -170,34 +202,48 @@ class Solver():
 
         return elevator, actionType
 
+    def check(self):
+        """
+        Uses checker to see if the model has errors
+        """
+
+        if os.path.isfile(SolverConfig.checker):
+            checker = Checker.Checker(SolverConfig.checker)
+            if self.instance is not None:
+                # check model
+                # convert shown atoms (which should be the actions) into a list of strings
+                checker.checkList(self.instance, [a.__str__() for a in self.model.actions])
+                self.checkErrors.val = self.checker.shownAtoms
+
+
+
     def callSolver(self, step=None):
         """
         This is the main call to the solver. Parameter step is used for solve calls after the first one.
-        :param step: Must be the amount of steps that were already executed. Adds the action up to this number to the history. Leave as None for the first call.
-        :return: void
+        :param step: Must be the amount of steps that were already executed. Adds the actionS up to this number to
+                     the history. Leave as None for the first call.
         """
         print "Solving... \n"
         if step is not None and self.solved:
             self.updateHistory(step)
         self.solve()
+        self.check()
         #self.stats()
         print "Finished Solving.\n"
 
     def solveFullPlan(self):
         """
-        Use this to only solve and print the full plan
+        Use this to solve once and return the plan and requests. Does not work for online solving.
         """
-
         self.solve()
-        for a in self.completePlan:
-            print a
+        return self.completePlan, self.reqs.val
 
     def getFullPlan(self):
         """
-        This returns the full plan as a dictionary. Each key is the time step. The value of the key is a list of lists that contain the elevator ID and the action
+        This returns the full plan as a dictionary. Each key is the time step. The value of the key is a list of lists
+        that contain the elevator ID and the action
         :return: Plan dictionary
         """
-
         plan = {}
 
         for action in self.completePlan:
@@ -217,7 +263,6 @@ class Solver():
         """
         Updates the History of actions that will be added to the solver as externals
         :param step: The last time step where actions will be added
-        :return: void
         """
 
         for action in self.completePlan:
@@ -253,7 +298,7 @@ class Solver():
 
     def addRequest(self, reqtype, time, params):
         """
-        Create a clingo function object for the request and add it  to the request list of externals.
+        Create a clingo function object for the request and add it to the request list of externals.
 
         :param reqtype: either call or deliver, it should be as the ones defined in the Constants.py file.
         :param time: time at which the request is added
@@ -278,7 +323,7 @@ class Solver():
 
     def stats(self):
         """
-        Update the stats. Called after each solver call.
+        Update the stats. Called after each solver call. Currently, clingo stats are not working.
         :return: void
         """
         statistics = json.loads(json.dumps(self.control.statistics, sort_keys=True, indent=4, separators=(',', ': ')))
@@ -323,9 +368,64 @@ class Solver():
 
     def getStats(self):
         # order matters if being used by the InfoPanel class of the visualizer
-        return [self.totalSolvingTime,
-                self.totalGroundingTime,
-                self.checkErrors]
+        return {self.totalSolvingTime.name :  self.totalSolvingTime.string(),
+                self.totalGroundingTime.name :  self.totalGroundingTime.string(),
+                self.checkErrors.name : self.checkErrors.string()}
+
+    def reset(self):
+        self.control = clingo.Control(SolverConfig.options)
+        if self.instanceType == "str":
+            self.loadInstanceStr(self.instanceStr)
+        elif self.instanceType == "file":
+            self.loadInstance(self.instance)
+
+        self.control.load(self.encoding)
+
+        self.grounded = 0
+
+        # self.imin = self.get(self.control.get_const("imin"), clingo.Number(0))
+        self.imax = self.get(self.control.get_const("imax"), clingo.Number(100))
+        self.istop = self.get(self.control.get_const("istop"), clingo.String("SAT"))
+
+        self.elevAmt = None
+        self.floors = None
+        self.startPos = None
+
+        self.step, self.ret = 1, None
+        self.solved = False
+
+        self.grounded = 0
+        self.solvingStep = 0
+
+        # lists for externals
+        self.moved = []
+        self.newRequests = []
+
+        # full solution for the last solve call
+        self.completePlan = []
+
+        # stat recording vars
+        self.totalSolvingTime.val = 0
+        self.totalGroundingTime.val = 0
+        self.checkErrors.val = None
+        self.reqs.val = None
+
+        self.model = Model()
+
+        self.getInitialReqs()
+
+
+
+
+class Model():
+    """
+    Simple class to hold the actions and the requests
+    """
+
+    def __init__(self):
+        self.actions = None
+        self.requests = None
+
 
 
 class Stat(object):
