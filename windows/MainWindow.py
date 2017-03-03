@@ -63,7 +63,7 @@ class MainWindow(QtGui.QMainWindow):
         loadInstanceAction.setShortcut("Ctrl+I")
         loadMenu.addAction(loadInstanceAction)
 
-        loadEncodingAction = QtGui.QAction("Load Encoding/Solver", self)
+        loadEncodingAction = QtGui.QAction("Load Encoding/LocalSolver", self)
         loadEncodingAction.triggered.connect(self.loadEncoding)
         loadEncodingAction.setShortcut("Ctrl+E")
         loadMenu.addAction(loadEncodingAction)
@@ -131,7 +131,7 @@ class MainWindow(QtGui.QMainWindow):
             self.hardReset()
 
     def loadEncoding(self):
-        text, ok = QtGui.QInputDialog.getText(self, "Encoding", "Enter Encoding/Solver Details: ")
+        text, ok = QtGui.QInputDialog.getText(self, "Encoding", "Enter Encoding/LocalSolver Details: ")
 
         if ok:
             text = str(text)

@@ -5,7 +5,7 @@ from PyQt4 import QtGui, QtCore
 import VisClient
 import VisConfig
 from Constants import *
-from Solver import LocalClient
+from LocalSolver import LocalClient
 
 
 class ElevatorVis(QtGui.QWidget):

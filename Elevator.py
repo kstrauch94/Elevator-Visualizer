@@ -62,7 +62,7 @@ if __name__ == "__main__":
 
     if args.off_line > 0:
         print "Solving encoding"
-        from Solver import LocalClient
+        from LocalSolver import LocalClient
 
         bridge = LocalClient.Connect(VisConfig.instance)
         bridge.createSolver()
