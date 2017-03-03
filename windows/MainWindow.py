@@ -92,6 +92,14 @@ class MainWindow(QtGui.QMainWindow):
         setConnInfo.triggered.connect(self.setConnectionInfo)
         connectMenu.addAction(setConnInfo)
 
+        switch = QtGui.QAction("Use sockets Comms", self)
+        switch.triggered.connect(lambda: self.switch(SOCKET))
+        connectMenu.addAction(switch)
+
+        switch = QtGui.QAction("Use local Comms", self)
+        switch.triggered.connect(lambda: self.switch(LOCAL))
+        connectMenu.addAction(switch)
+
         self.mainVbox.addWidget(self.menuBar)
 
     def initialize(self):
@@ -106,6 +114,10 @@ class MainWindow(QtGui.QMainWindow):
             port = int(text[1])
             print host, port
             self.elevatorWindow.elevatorInterface.setConnectionInfo(host, port)
+
+    def switch(self, mode):
+        self.elevatorWindow.elevatorInterface.setMode(mode)
+        self.hardReset()
 
     def loadInstance(self):
 
