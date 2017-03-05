@@ -4,14 +4,14 @@ import os
 import clingo
 
 import Checker
-import LocalSolver.SolverConfig
-from windows.Constants import *
+import SolverConfig
+from Constants import *
 
 
 class Solver():
 
     def __init__(self, encoding=None, instance=None):
-        self.control = clingo.Control(LocalSolver.SolverConfig.options)
+        self.control = clingo.Control(SolverConfig.options)
 
         self.encoding = None
         if encoding is not None:
@@ -182,7 +182,7 @@ class Solver():
         self.model.actions = self.completePlan
         self.model.requests = self.reqs.val
 
-        if LocalSolver.SolverConfig.printAtoms:
+        if SolverConfig.printAtoms:
             self.printAtoms(model.symbols(atoms=True))
 
     def actionFilter(self, atom):
@@ -213,8 +213,8 @@ class Solver():
         Uses checker to see if the model has errors
         """
 
-        if os.path.isfile(LocalSolver.SolverConfig.checker):
-            checker = Checker.Checker(LocalSolver.SolverConfig.checker)
+        if os.path.isfile(SolverConfig.checker):
+            checker = Checker.Checker(SolverConfig.checker)
             if self.instance is not None:
                 # check model
                 # convert shown atoms (which should be the actions) into a list of strings
@@ -385,7 +385,7 @@ class Solver():
         Reset the solver. Preserves the instance. Does not ground.
         :return:
         """
-        self.control = clingo.Control(LocalSolver.SolverConfig.options)
+        self.control = clingo.Control(SolverConfig.options)
         if self.instanceType == "str":
             self.loadInstanceStr(self.instanceStr)
         elif self.instanceType == "file":
