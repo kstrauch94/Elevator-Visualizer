@@ -34,14 +34,14 @@ def writeAnswer(instance, actions, reqs):
 
 if __name__ == "__main__":
     desc = "Visualizer for an Elevator domain. Configuration can be set in the VisConfig.py file or specified with arguments\n\n" \
-                                                 "It loads the encoding and instance and solves it when the next action button is pressed. " \
-                                                 "It then applies one action and updates the visualization to reflect that. Requests can be added at anytime.\n\n" \
-                                                 ".\nAdditionally, instead of an encoding, a file with a plan on it can be used to" \
-                                                 "visualize said plan.\nEncoding and instance file paths can be either given with the Config file or with arguments described below."
+                                                 "It loads instance and solves it by sending messages to a server or using the build in solver.\n" \
+                                                 "Requests can be added at anytime if it is support by the solver.\n\n" \
+                                                 "\ninstance file paths can be either given with the VisConfig file or with argument described below."
 
     parser = argparse.ArgumentParser(description=desc, formatter_class=RawTextHelpFormatter)
 
-    parser.add_argument("-o", "--off-line", help="Requires the cling module\n1 : Solve and print the full plan without the visualizer then exit.\n2 : Also print the request atoms.\n3 : Write answer to a file", action="count", default=0)
+    parser.add_argument("-o", "--off-line", help="1 : Solve and print the full plan without the visualizer then exit.\n" \
+                                                 "2 : Also print the request atoms.\n3 : Write answer to a file", action="count", default=0)
     parser.add_argument("-m", "--local-mode", help="Set initial connection mode to local instead of socket", action="store_true")
     parser.add_argument("-i", "--instance", help="Instance file name to use initially.", default=VisConfig.instance)
     parser.add_argument("-H", "--host", help="Host IP address", default=VisConfig.host)
