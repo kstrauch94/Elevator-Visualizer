@@ -11,6 +11,11 @@ The visualizer can be configured in the VisCofig.py file. To start the visualize
 $ python Elevator.py
 ```
 
+If using the socket communication, remember to start the server. The server inclued in the package can be started by using the following command in the server folder:
+```
+$ python SolverServer.py
+```
+
 The command opens a visualization window and a control window with several buttons. Press "Initialize Connection" to start visualizing. If using the server make sure to start it.
 
 The visualization has vertical rectangle divided into squares as the elevator shaft. The elevator is a red square. The last action performed is visualized below by either an arrow or a rectangle. An "N" is displayed if no action was taken. Stats might be displayed on the right side of the window.
