@@ -9,7 +9,9 @@ from LocalSolver import LocalClient
 
 
 class ElevatorVis(QtGui.QWidget):
-    """Visualizer Class for an individual Elevator"""
+    """
+    Visualizer Class for an individual Elevator
+    """
     def __init__(self, size):
         """
         :param size: size of the squares
@@ -38,7 +40,7 @@ class ElevatorVis(QtGui.QWidget):
     def setDrawPos(self, x, y):
         """
         :param x: usually left as 0 as the pyQT layout manages the position
-        :param y: should be the position when on floor 1 (ground floor), basically the height of the whole elevator "shaft"7
+        :param y: should be the position when on floor 1 (ground floor), basically the height of the whole elevator "shaft"
                   Should be floors * size
         :return: void
         """
@@ -47,6 +49,10 @@ class ElevatorVis(QtGui.QWidget):
         self.ypos = y
 
     def paintEvent(self, QPaintEvent):
+        """
+        Qt drawing function that gets called in the internal loop. Currently bugged and gets called as mucha s possible.
+        Hence the sleep at the end to limit the cpu usage.
+        """
         qp = QtGui.QPainter()
         qp.begin(self)
 
@@ -59,7 +65,6 @@ class ElevatorVis(QtGui.QWidget):
         """
         Get elevator data object to display on the next draw call
         :param elevator: elevator data object
-        :return: void
         """
         self.floors = elevator.floors
         self.currentFloor = elevator.currentFloor
@@ -104,7 +109,7 @@ class ElevatorVis(QtGui.QWidget):
 
 class Elevator():
     """
-    Elevator data class. Keeps track of the elevator position, history and current +last step.
+    Elevator data class. Keeps track of the elevator position, history and current + last step.
     """
     def __init__(self, floors, startPos):
 
@@ -112,7 +117,9 @@ class Elevator():
         self.step = 0
         self.lastStep = 0
         self.history = [startPos]
+        self.actionHistory = [NONEACT]
 
+        # This is to easily transform the given action to a movement
         self.moveDict = {}
         self.moveDict[UP] = 1
         self.moveDict[DOWN] = -1
@@ -120,25 +127,22 @@ class Elevator():
         self.moveDict[SERVE] = 0
         self.moveDict[NONEACT] = 0
 
-
-        self.actionHistory = [NONEACT]
-
     def execute(self, action):
         """
-        Depending on the action is goes up, down or stays.
+        Depending on the action t goes up, down or stays.
         This should only be called with a new action that directly follows the last one completed
         :param action: Action as defined in the Constants.py file
         """
         currentFloor = self.history[self.lastStep]
-        self.actionHistory.append(action)
         if action == DOWN and currentFloor == 1:
             print "Invalid move, trying to move down when already at the bottom floor."
-            return
+            return 0
 
         if action == UP and currentFloor == self.floors:
             print "Invalid move, trying to move up when already at the top floor."
-            return
+            return 0
 
+        self.actionHistory.append(action)
         self.history.append(self.currentFloor + self.moveDict[action])
 
         self.lastStep += 1
@@ -167,7 +171,8 @@ class Elevator():
 
 class ElevatorInterfaceVis(QtGui.QWidget):
     """
-    Visualizer for the whole instance. Keeps track of every elevator visualizer in the instance.
+    Visualizer for the whole instance. Keeps track of every elevator visualizer in the instance. Updates with an
+    ElevatorInterface data class.
     """
     def __init__(self, size):
         """
@@ -217,7 +222,8 @@ class ElevatorInterfaceVis(QtGui.QWidget):
 
     def reset(self):
         """
-        Resets the whole interface and deletes the old elevator visualizers from the layout container.
+        Resets the whole interface and deletes the old elevator visualizers from the layout container. Used for hard
+        resets.
         """
         for i in reversed(range(self.hbox.count())):
             self.hbox.itemAt(i).widget().setParent(None)
@@ -238,6 +244,8 @@ class ElevatorInterface(QtCore.QObject):
 
         super(ElevatorInterface, self).__init__()
 
+        # This has the Socket client and the local solver. They both have the same functions and return the same thing.
+        # Use the bridge @property to acces the correct one based on the self.mode variable.
         self.solverConns = {SOCKET: VisClient.VisSocket(), LOCAL: LocalClient.Connect()}
         self.mode = LOCAL
 
@@ -263,8 +271,8 @@ class ElevatorInterface(QtCore.QObject):
     def setMode(self, mode):
         if mode != LOCAL and mode != SOCKET:
             print "Invalid mode: " + str(mode)
-            return 0
-        self.mode = mode
+        else:
+            self.mode = mode
 
     def setConnectionInfo(self, host, port):
 
@@ -272,7 +280,10 @@ class ElevatorInterface(QtCore.QObject):
         self.bridge.setPort(port)
 
     def initialize(self):
-        # Connect and get instance base
+        """
+        Send reset followed by the instance. Retrieve the instance information.
+        :return: int -> Success or fail
+        """
         if not self.bridge.reset("hard"):
             return 0
         if not self.bridge.sendBaseRequest(self.instanceStr):
@@ -288,11 +299,19 @@ class ElevatorInterface(QtCore.QObject):
         return 1
 
     def setInstance(self, instance):
+        """
+        set instance and create its string version so that it can be sent via sockets
+        :param instance: instance file path
+        """
         self.instance = instance
         with open(self.instance, 'r') as myfile:
             self.instanceStr = myfile.read()
 
     def sendEncoding(self, encoding):
+        """
+        :param encoding: encoding user input from dialog
+        :return: int -> success or fail
+        """
         return self.bridge.sendEncoding(encoding)
 
     def setElevators(self):
@@ -312,10 +331,12 @@ class ElevatorInterface(QtCore.QObject):
         """
         increase step count by 1 if its possible. Solve again if a request has been added.
         Also call the next function for every elevator if step count was increased.
+        :return: int -> success or fail
         """
 
         if self.hasToSolve and self.step == self.highestStep:
             if not self.solve():
+                # If solve fails, E.G. cant connect to server or invalid info was received.
                 return 0
             self.hasToSolve = False
 
@@ -327,22 +348,28 @@ class ElevatorInterface(QtCore.QObject):
             if self.step - 1 == self.highestStep:
                 self.highestStep += 1
 
-                moves = self.plan[self.step]
-                for move in moves:
-                    # get elevator ID
-                    elevator = move[0]
-                    action = move[1]
-                    self.elevators[elevator - 1].execute(action)
-
-
+            self.executeStep()
 
             for e in self.elevators:
                 e.next()
 
         return 1
+
+    def executeStep(self):
+        """
+        Execute the next step of the plan. Should only be called when a new highest step has been reached.
+        Moves in a step are tuples (elevator ID, Action). Plan step is a list of such tuples.
+        """
+        moves = self.plan[self.step]
+        for move in moves:
+            # get elevator ID
+            elevator = move[0]
+            action = move[1]
+            self.elevators[elevator - 1].execute(action)
+
     def previous(self):
         """
-        Lowers step value. if counter is at 1 (lowest) -> do nothing
+        Lowers step value. if counter is at 0 (lowest) -> do nothing
         """
 
         if self.step >= 1:
@@ -355,11 +382,14 @@ class ElevatorInterface(QtCore.QObject):
 
     def solve(self):
         """
-        Retrieve plan from bridge by calling nextMoves(Which calls the actual solver).
+        Retrieve plan from bridge by calling nextMoves(Which calls the actual solver or sends message).
         Process the plan + requests and emit signals that they changed
+        :return: int -> success or fail
         """
+        # the parameter means that the actions up to that point were executed and should stay the same
         self.plan = self.bridge.nextMoves(self.highestStep)
 
+        # if retrieving the new plan fails
         if self.plan == 0:
             return 0
         self.planLength = int(max(self.plan))
@@ -382,15 +412,22 @@ class ElevatorInterface(QtCore.QObject):
         Fills the spots in the plan with no actions to contain a NONEACT.
         """
 
+        # for every time step up to the max step
         for t in range(1, self.planLength + 1):
+            #check if entries for that step exist
             if t in self.plan:
+                # if less entries than elevators
                 if len(self.plan[t]) != self.elevatorCount:
+                    # Find out which elevators have no entries
                     elevs = range(1, self.elevatorCount+1)
                     for move in self.plan[t]:
                         elevs.remove(move[0])
 
+                    #For every elevator with no entries insert a NONEACT
                     for e in elevs:
                         self.plan[t].append([e, NONEACT])
+
+            # if time step has no entry insert key and fill it with NONEACT for all elevators
             else:
                 elevs = range(1, self.elevatorCount + 1)
                 self.plan[t] = []
@@ -400,7 +437,8 @@ class ElevatorInterface(QtCore.QObject):
 
     def parseRequests(self):
         """
-        Sees if a request was completed by comparing time steps. If a request is in time T but not in T+1 then it was completed
+        Sees if a request was completed by comparing time steps. If a request is in time T but not in T+1 then it was
+        completed
         """
 
         self.requestsServed = self.requestInfo.copy()
@@ -417,6 +455,7 @@ class ElevatorInterface(QtCore.QObject):
 
             self.requestsServed[time+1] = completed
 
+        #Cant serve requests at point 0 but we populate the dict for consistency
         self.requestsServed[0] = []
 
     def addRequest(self, type, params):
@@ -424,10 +463,13 @@ class ElevatorInterface(QtCore.QObject):
         Add request to the solver and keep track of it
         :param type: request type
         :param params: parameters of the request
+        :return: int -> succes or fail
         """
-        self.hasToSolve = True
         if not self.bridge.addRequest(type, self.highestStep, params):
+            # return if adding the request fails
             return 0
+
+        self.hasToSolve = True
 
         if type == REQ_CALL:
             string = "call({}) to {}".format(params[0], params[1])
@@ -446,18 +488,18 @@ class ElevatorInterface(QtCore.QObject):
 
     def getStats(self):
         """
-        It just calls the getStats function from the encoding manager (solver) and return the value
-        :return: list of Stat objects
+        It just calls the getStats function from the active connection and return the value
+        :return: dictionary with values being strings that represent some stat
         """
-
         return self.bridge.getStats()
 
     def reset(self):
         """
-        Creates a new solver object so that it reloads everything. Resets every tracking variable
-        It also creates the elevetor objects again.
+        Sends a soft reset message and resets the variables while retaining instance specific ones such as floor amount.
+        :return: int -> success or fail
         """
-        self.bridge.reset("soft")
+        if not self.bridge.reset("soft"):
+            return 0
         self.step = 0
         self.highestStep = 0
         self.planLength = 0
@@ -474,9 +516,16 @@ class ElevatorInterface(QtCore.QObject):
 
         self.hasToSolve = True
 
+        return 1
+
 
     def hardReset(self):
-        self.bridge.reset("hard")
+        """
+        Sends a hard reset message and resets every variables including instance specific ones such as floor amount.
+        :return: int -> success or fail
+        """
+        if not self.bridge.reset("hard"):
+            return 0
         self.elevatorCount = None
         self.floors = None
         self.elevators = []
@@ -494,8 +543,14 @@ class ElevatorInterface(QtCore.QObject):
 
         self.hasToSolve = True
 
+        return 1
+
     @property
     def requestCompleted(self):
+        """
+        Returns a formatted string of the requests completed in the current active time step
+        :return string
+        """
         try:
             return ", ".join(self.requestsServed[self.step])
         except (TypeError, KeyError):
@@ -503,6 +558,10 @@ class ElevatorInterface(QtCore.QObject):
 
     @property
     def currentRequests(self):
+        """
+        Return a formatted string of the requests active in the current active time step
+        :return: string
+        """
         try:
             return ", ".join(self.requestInfo[self.step])
         except (TypeError, KeyError):
@@ -510,6 +569,10 @@ class ElevatorInterface(QtCore.QObject):
 
     @property
     def bridge(self):
+        """
+        returns the correct connection object based on the self.mode variable
+        :return: Either a LocalSolver.Localclient.Connect() object or a VisClient.VisSocket() object
+        """
         return self.solverConns[self.mode]
 
 class ElevatorWindow(QtGui.QWidget):
@@ -543,7 +606,11 @@ class ElevatorWindow(QtGui.QWidget):
 
 
     def initialize(self):
-
+        """
+        Tries to initialize the elevatorInterface which involves sending instance to solver and retrieving instance info.
+        Also initializes the elevatorInterface Visualizer.
+        :return: int -> function success or fail
+        """
         if self.hasInitialized:
             return 0
 
@@ -560,11 +627,18 @@ class ElevatorWindow(QtGui.QWidget):
         return 1
 
     def updateAll(self):
+        """
+        passes elevatorInterface to visualizer and also updates stats
+        """
         self.elevatorInterfaceVis.updateElevators(self.elevatorInterface)
         stats = self.elevatorInterface.bridge.getStats()
         self.infoPanel.updateStats(stats)
 
     def next(self):
+        """
+        Go to next step
+        :return: int -> success or fail
+        """
         if self.hasInitialized:
             if not self.elevatorInterface.next():
                 print "Could not solve. Can't connect to server."
@@ -574,11 +648,20 @@ class ElevatorWindow(QtGui.QWidget):
         return 1
 
     def previous(self):
+        """
+        Go to previous step. Should never fail
+        """
         if self.hasInitialized:
             self.elevatorInterface.previous()
             self.updateAll()
 
     def addRequest(self, type, *params):
+        """
+        Sends request to solver
+        :param type: type as defined in the Constants.py
+        :param params: requests parameters
+        :return: int -> success or fail
+        """
         if not self.elevatorInterface.addRequest(type, params):
             print "Could not add request. Can't connect to server."
             return 0
@@ -586,26 +669,43 @@ class ElevatorWindow(QtGui.QWidget):
         return 1
 
     def reset(self):
+        """
+        soft reset. Keep instance variables and dont reset visualizer.
+        :return: int -> success or fail
+        """
         if self.hasInitialized:
-            self.elevatorInterface.reset()
+            if not self.elevatorInterface.reset():
+                return 0
 
             self.elevatorInterfaceVis.updateElevators(self.elevatorInterface)
 
             stats = self.elevatorInterface.bridge.getStats()
             self.infoPanel.updateStats(stats)
+        return 1
 
     def hardReset(self):
-
-        self.elevatorInterface.hardReset()
+        """
+        hard reset means a new instance will be given to solver soon.
+        :return: int -> success or fail
+        """
+        if not self.elevatorInterface.hardReset():
+            return 0
         self.elevatorInterfaceVis.reset()
 
         self.hasInitialized = False
 
         self.initialize()
 
+        return 1
 class InfoPanel(QtGui.QWidget):
+    """
+    Class to visualize the stats
+    """
 
     def __init__(self, labels = None):
+        """
+        :param labels: dictionary with strings to be visualized. Not necessary to pass anything
+        """
         super(InfoPanel, self).__init__()
 
         self.separation = 10
@@ -625,7 +725,10 @@ class InfoPanel(QtGui.QWidget):
         self.setLayout(self.vbox)
 
     def updateStats(self, stats):
-
+        """
+        Create labels for new stats and update old ones
+        :param stats: dictionary with strings to be visualized
+        """
         if stats is not None:
             for s in stats:
                 if s not in self.stats:

@@ -8,12 +8,16 @@ import os
 import Constants
 
 class CallRequestDialog(QtGui.QDialog):
+    """
+    Custom dialog to handle call requests. Has 2 buttons for the "up" or "down" direction and one button for each floor.
+    """
 
     def __init__(self, floorAmt, parent = None,):
         super(CallRequestDialog, self).__init__(parent)
 
         self.setWindowTitle("Call Request")
 
+        # Columns for the floors. There will me max 5 floors in a row
         self.cols = 5
 
         self.type = None
@@ -40,6 +44,10 @@ class CallRequestDialog(QtGui.QDialog):
         self.show()
 
     def setTypeButtons(self):
+        """
+        Set up the "call" and the "down" buttons. Clicking them gives their respective value to the self.type variable
+        :return:
+        """
 
         hbox = QtGui.QHBoxLayout()
 
@@ -56,6 +64,11 @@ class CallRequestDialog(QtGui.QDialog):
         self.mainVBox.addLayout(hbox)
 
     def setFloorButtons(self,floorAmt):
+        """
+        Makes rows of buttons for the floors. There is a max for self.cols buttons for every row. Clicking them gives
+        value to the self.floor variable.
+        :param floorAmt: Amount of floors (int)
+        """
 
         self.grid = QtGui.QGridLayout()
 
@@ -85,12 +98,21 @@ class CallRequestDialog(QtGui.QDialog):
 
     @staticmethod
     def getRequest(floors, parent=None):
+        """
+        This method should get called when using this dialog.
+        :param floors: floor amount
+        :param parent: parent widget
+        :return:
+        """
         dialog = CallRequestDialog(floors, parent)
         result = dialog.exec_()
 
         return (result == QtGui.QDialog.Accepted, dialog.type, dialog.floor)
 
 class DeliverRequestDialog(QtGui.QDialog):
+    """
+    Custom dialog class for the deliver request. Sets up buttons for every elevator and for every floor.
+    """
 
     def __init__(self, floorAmt, elevAmt, parent=None, ):
         super(DeliverRequestDialog, self).__init__(parent)
@@ -123,6 +145,10 @@ class DeliverRequestDialog(QtGui.QDialog):
         self.show()
 
     def setElevatorButtons(self, elevAmt):
+        """
+        Set a button for every elevator with a max of self.cols per row. Clicking one populates the self.elevator var
+        :param elevAmt: amount of elevators
+        """
 
         self.elevatorGrid = QtGui.QGridLayout()
 
@@ -142,6 +168,11 @@ class DeliverRequestDialog(QtGui.QDialog):
 
 
     def setFloorButtons(self, floorAmt):
+        """
+        Makes rows of buttons for the floors. There is a max for self.cols buttons for every row. Clicking them gives
+        value to the self.floor variable.
+        :param floorAmt: Amount of floors (int)
+        """
 
         self.floorGrid = QtGui.QGridLayout()
 
@@ -171,6 +202,13 @@ class DeliverRequestDialog(QtGui.QDialog):
 
     @staticmethod
     def getRequest(floors, elevs, parent=None):
+        """
+        This method should get called when using this dialog.
+        :param floors: Floor amount
+        :param elevs: Amount of elevators
+        :param parent: Parent widget
+        :return:
+        """
         dialog = DeliverRequestDialog(floors, elevs, parent)
         result = dialog.exec_()
 
@@ -178,6 +216,9 @@ class DeliverRequestDialog(QtGui.QDialog):
 
 
 class RequestsWindow(QtGui.QWidget):
+    """
+    Window that displays when a request was completed and when a request was added
+    """
 
     def __init__(self):
         super(RequestsWindow, self).__init__()
@@ -195,24 +236,33 @@ class RequestsWindow(QtGui.QWidget):
 
     @QtCore.pyqtSlot(dict, dict)
     def setRequests(self, served, added):
+        """
+        This function gets called when the ElevatorInterface class emits a signal that the requests changed.
+        :param served: list of served requests per time point
+        :param added: list of added requests per time point
+        """
 
         self.served.setRequests(served)
         self.added.setRequests(added)
 
     def reset(self):
-
         self.served.reset()
         self.added.reset()
 
 class RequestBox(QtGui.QWidget):
+    """
+    Holder class for the request dictionary. Displays some header text and the values of the dictionary in a formatted way
+    """
 
     def __init__(self, emptyStr, Str):
         super(RequestBox, self).__init__()
 
         self.reqs = {}
+        # This are the header Strings, one for the empty dict and one for a populated one
         self.emptyStr = emptyStr
         self.notemptyStr = Str
 
+        # The stretcher is just a way to keep the requests at the top while being able to add to the layout dynamically
         self.StretcherVBox = QtGui.QVBoxLayout()
         self.header = QtGui.QLabel(self.emptyStr)
         self.vbox = QtGui.QVBoxLayout()
@@ -223,6 +273,12 @@ class RequestBox(QtGui.QWidget):
         self.setLayout(self.StretcherVBox)
 
     def setRequests(self, new):
+        """
+        receive the dictionary with the requests, format it and create a label for it. Also keep the references. If time
+        point in dict was already handled just update the variable.
+        :param new: dictionary with the requests
+        :return:
+        """
 
         for time in new:
             if new[time] != []:
@@ -238,6 +294,8 @@ class RequestBox(QtGui.QWidget):
             self.header.setText(self.notemptyStr)
 
     def reset(self):
+
+        # Delete all references to the widgets so that they can be garbage collected
         for i in reversed(range(self.vbox.count())):
             self.vbox.itemAt(i).widget().setParent(None)
 
@@ -248,6 +306,9 @@ class RequestBox(QtGui.QWidget):
 
 
 class PlanWindow(QtGui.QWidget):
+    """
+    Window that displays the actions of the plan in a table like way
+    """
 
     def __init__(self):
         super(PlanWindow, self).__init__()
@@ -276,12 +337,16 @@ class PlanWindow(QtGui.QWidget):
 
     @QtCore.pyqtSlot(dict)
     def setPlan(self, plan):
+        """
+        Function gets called when the ElevatorInterface emits a signal that says the plan changed. Passes the plan to
+        the widget so that it can be handled
+        :param plan: dictionary with the actions
+        """
 
         if plan != {}:
             self.headerText.setText("--- Plan ---")
 
         self.planWidget.setPlan(plan)
-        self.planWidget.repaint()
 
     def reset(self):
         self.planWidget.reset()
@@ -289,6 +354,10 @@ class PlanWindow(QtGui.QWidget):
 
 
 class PlanWidget(QtGui.QWidget):
+    """
+    Widget that has the actual layout of the plan window. Populates a grid layout where the headers are the elevators
+    and the left side has the time step number. The actions are handled by a separate widget.
+    """
 
     def __init__(self, parent = None):
         super(PlanWidget, self).__init__(parent)
@@ -306,6 +375,11 @@ class PlanWidget(QtGui.QWidget):
         self.setLayout(self.vbox)
 
     def setPlan(self, plan):
+        """
+        Sets the headers and the time point labels on the left side. Also creates the "Action Widgets" for the actions
+        and puts them in their respective way.
+        :param plan: dictionary with the actions
+        """
 
         if plan != {}:
 
@@ -332,6 +406,9 @@ class PlanWidget(QtGui.QWidget):
                         self.elevatorGrid.itemAtPosition(time, elev).widget().setAction(action)
 
     def toggleText(self):
+        """
+        Just toggle if the text shows or not
+        """
 
         self.showText = not self.showText
 
@@ -350,6 +427,10 @@ class PlanWidget(QtGui.QWidget):
 
 
 class ActionWidget(QtGui.QWidget):
+    """
+    Widget that handles what will be displayed in the plan window for a single action. Contains references to the images
+    and displays text if enabled.
+    """
 
     def __init__(self, action, displayText = False):
         super(ActionWidget, self).__init__()
@@ -370,6 +451,7 @@ class ActionWidget(QtGui.QWidget):
         self.textDict[Constants.WAIT] = Constants.WAITTEXT
         self.textDict[Constants.NONEACT] = Constants.NONEACTTEXT
 
+        # Actual var that will contain the picture
         self.picture = QtGui.QLabel(self)
         self.picture.setPixmap(self.imagedict[action])
         if self.imagedict[action].isNull():
@@ -387,7 +469,9 @@ class ActionWidget(QtGui.QWidget):
         self.setLayout(self.vbox)
 
     def setAction(self, action):
+
         self.picture.setPixmap(self.imagedict[action])
+        # if the image could not be loaded hide the label so that the text is at a normal height
         if self.imagedict[action].isNull():
             self.picture.hide()
         else:

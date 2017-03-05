@@ -39,6 +39,7 @@ class MainWindow(QtGui.QMainWindow):
 
     def initWindows(self):
         self.elevatorWindow = ElevatorWindow.ElevatorWindow()
+        # Set comm via sockets of local
         self.elevatorWindow.elevatorInterface.setMode(self.connMode)
         self.elevatorWindow.show()
 
@@ -103,6 +104,9 @@ class MainWindow(QtGui.QMainWindow):
         self.mainVbox.addWidget(self.menuBar)
 
     def initialize(self):
+        """
+        Function called when the instance information has been received from the connected solver
+        """
         self.elevatorWindow.initialize()
 
     def setConnectionInfo(self):
@@ -116,10 +120,18 @@ class MainWindow(QtGui.QMainWindow):
             self.elevatorWindow.elevatorInterface.setConnectionInfo(host, port)
 
     def switch(self, mode):
+        """
+        Switch to connection mode given in the parameter. Hard reset since solver changes. Need to make sure that the
+        solver is in the correct state.
+        :param mode: SOCKET or LOCAL
+        """
         self.elevatorWindow.elevatorInterface.setMode(mode)
         self.hardReset()
 
     def loadInstance(self):
+        """
+        Changes the instance var in the elevatorInterface. Then it hardresets (Which in turn initializes again
+        """
 
         dialog = QtGui.QFileDialog()
         instance = str(dialog.getOpenFileName(self, "Open File", os.getcwd(), "All files (*.*)", options=QtGui.QFileDialog.DontUseNativeDialog))
@@ -131,6 +143,9 @@ class MainWindow(QtGui.QMainWindow):
             self.hardReset()
 
     def loadEncoding(self):
+        """
+        Receive some user input and send that same input to the solver
+        """
         text, ok = QtGui.QInputDialog.getText(self, "Encoding", "Enter Encoding/LocalSolver Details: ")
 
         if ok:
@@ -172,15 +187,25 @@ class MainWindow(QtGui.QMainWindow):
         self.mainVbox.addLayout(self.buttonsHbox)
 
     def addCallRequest(self):
+        """
+        Uses the Widget specific for this request defined in windows/Widgets.py
+        """
         if self.elevatorWindow.hasInitialized:
             floors = self.elevatorWindow.elevatorInterface.floors
 
             ok, type, floor = Widgets.CallRequestDialog.getRequest(floors, self)
 
             if ok:
-                self.elevatorWindow.addRequest(REQ_CALL, type, floor)
+                if type is not None and floor is not None:
+                    self.elevatorWindow.addRequest(REQ_CALL, type, floor)
+                else:
+                    print "Both, Type and floor, must be selected."
+
 
     def addDeliverRequest(self):
+        """
+        Uses the Widget specific for this request defined in windows/Widgets.py
+        """
         if self.elevatorWindow.hasInitialized:
             floors = self.elevatorWindow.elevatorInterface.floors
             elevs = self.elevatorWindow.elevatorInterface.elevatorCount
@@ -188,7 +213,10 @@ class MainWindow(QtGui.QMainWindow):
             ok, elev, floor = Widgets.DeliverRequestDialog.getRequest(floors, elevs, self)
 
             if ok:
-                self.elevatorWindow.addRequest(REQ_DELIVER, elev, floor)
+                if floor is not None and elev is not None:
+                    self.elevatorWindow.addRequest(REQ_DELIVER, elev, floor)
+                else:
+                    print "Both, elevator and floor, must be selected."
 
 
     def next(self):
@@ -206,6 +234,9 @@ class MainWindow(QtGui.QMainWindow):
         self.updateInfo()
 
     def updateInfo(self):
+        """
+        Extract informaiton from the elevatorInterface and update the references
+        """
 
         self.instanceInfo["Current Step"].setText("Current Step : " + str(self.elevatorWindow.elevatorInterface.step))
 
@@ -219,36 +250,45 @@ class MainWindow(QtGui.QMainWindow):
 
     def prepareInterface(self):
         """
-        Creates a window for the isntance. It also extracts information from it and initializes the information display
+        Creates a window for the instance. It also extracts information from it and initializes the information display
         """
         self.ConfigInfoVbox = QtGui.QVBoxLayout()
         self.ConfigInfoVbox.setAlignment(QtCore.Qt.AlignLeft)
 
-        #info is set in the setInterface function
         self.instanceInfo = {}
 
+        # Instance
         self.instanceInfo["instance"] = QtGui.QLabel("Instance : " + VisConfig.instance)
+        self.ConfigInfoVbox.addWidget(self.instanceInfo["instance"])
 
+        # Floors
         text = "floors : " + str(self.elevatorWindow.elevatorInterface.floors)
         self.instanceInfo["floors"] = QtGui.QLabel(text, self)
+        self.ConfigInfoVbox.addWidget(self.instanceInfo["floors"])
 
+        # Elevators
         text = "Elevators : " + str(self.elevatorWindow.elevatorInterface.elevatorCount)
         self.instanceInfo["agents"] = QtGui.QLabel(text, self)
-
-        self.instanceInfo["Current Step"] = QtGui.QLabel("Current Step : " + str(self.elevatorWindow.elevatorInterface.step), self)
-        self.instanceInfo["Highest Step"] = QtGui.QLabel("Highest Step : " + str(self.elevatorWindow.elevatorInterface.highestStep), self)
-        self.instanceInfo["Total Plan Length"] = QtGui.QLabel("Total Plan Length : " + str(self.elevatorWindow.elevatorInterface.planLength), self)
-        self.instanceInfo["Current Requests"] = QtGui.QLabel("Current Requests : " + str(self.elevatorWindow.elevatorInterface.currentRequests), self)
-        self.instanceInfo["Requests Completed"] = QtGui.QLabel("Requests Completed : " + str(self.elevatorWindow.elevatorInterface.requestCompleted), self)
-
-
-        self.ConfigInfoVbox.addWidget(self.instanceInfo["instance"])
-        self.ConfigInfoVbox.addWidget(self.instanceInfo["floors"])
         self.ConfigInfoVbox.addWidget(self.instanceInfo["agents"])
+
+        # Current Step
+        self.instanceInfo["Current Step"] = QtGui.QLabel("Current Step : " + str(self.elevatorWindow.elevatorInterface.step), self)
         self.ConfigInfoVbox.addWidget(self.instanceInfo["Current Step"])
+
+        # Highest Step
+        self.instanceInfo["Highest Step"] = QtGui.QLabel("Highest Step : " + str(self.elevatorWindow.elevatorInterface.highestStep), self)
         self.ConfigInfoVbox.addWidget(self.instanceInfo["Highest Step"])
+
+        # Total plan length
+        self.instanceInfo["Total Plan Length"] = QtGui.QLabel("Total Plan Length : " + str(self.elevatorWindow.elevatorInterface.planLength), self)
         self.ConfigInfoVbox.addWidget(self.instanceInfo["Total Plan Length"])
+
+        # Current Requests
+        self.instanceInfo["Current Requests"] = QtGui.QLabel("Current Requests : " + str(self.elevatorWindow.elevatorInterface.currentRequests), self)
         self.ConfigInfoVbox.addWidget(self.instanceInfo["Current Requests"])
+
+        # Requests Completed
+        self.instanceInfo["Requests Completed"] = QtGui.QLabel("Requests Completed : " + str(self.elevatorWindow.elevatorInterface.requestCompleted), self)
         self.ConfigInfoVbox.addWidget(self.instanceInfo["Requests Completed"])
 
         self.ConfigInfoVbox.addStretch(1)
@@ -257,7 +297,10 @@ class MainWindow(QtGui.QMainWindow):
 
 
     def reset(self):
-
+        """
+        Makes a soft reset. Soft reset means that only resets variables, instance stays the same, hence no need to reset
+        the visualization
+        """
         self.elevatorWindow.reset()
 
         self.planWindow.reset()
@@ -266,6 +309,9 @@ class MainWindow(QtGui.QMainWindow):
         self.updateInfo()
 
     def hardReset(self):
+        """
+        Hard reset is done just before changing instances, hence it also resets the visualization
+        """
 
         self.elevatorWindow.hardReset()
 

@@ -4,14 +4,14 @@ import os
 import clingo
 
 import Checker
-import SolverConfig
-from Constants import *
+import LocalSolver.SolverConfig
+from windows.Constants import *
 
 
 class Solver():
 
     def __init__(self, encoding=None, instance=None):
-        self.control = clingo.Control(SolverConfig.options)
+        self.control = clingo.Control(LocalSolver.SolverConfig.options)
 
         self.encoding = None
         if encoding is not None:
@@ -81,7 +81,9 @@ class Solver():
         return val if val != None else default
 
     def getInitialReqs(self):
-
+        """
+        retrieves the requests from time point 0.
+        """
         self.reqs.val = []
 
         for x in self.control.symbolic_atoms:
@@ -92,6 +94,9 @@ class Solver():
                         self.reqs.val.append(atom)
 
     def getBaseValues(self):
+        """
+        Retrieves the base values of the instance. Should only be called after the instance has been given, else it crashes
+        """
         self.floors = self.control.get_const("floors").number
         self.elevAmt = self.control.get_const("agents").number
 
@@ -117,10 +122,12 @@ class Solver():
 
         self.ret = None
         self.lastMove = None
-        #add the last actions
+
+        # add the last actions (already executed actions)
         for move in self.moved:
             self.control.assign_external(move, True)
 
+        # add any new requests
         if self.newRequests != []:
             if self.grounded == 0:
                 self.groundStart()
@@ -155,11 +162,10 @@ class Solver():
     def on_model(self, model):
 
         print "Model found\n"
-        #increase solving step and set the step var to this value so that on the next solve call it starts solving there.
+
         self.solvingStep += 1
         self.step = self.solvingStep
 
-        # update stat recording of the current step and stat var for the solving status is made true
         self.solved = True
 
         self.completePlan = []
@@ -176,7 +182,7 @@ class Solver():
         self.model.actions = self.completePlan
         self.model.requests = self.reqs.val
 
-        if SolverConfig.printAtoms:
+        if LocalSolver.SolverConfig.printAtoms:
             self.printAtoms(model.symbols(atoms=True))
 
     def actionFilter(self, atom):
@@ -207,8 +213,8 @@ class Solver():
         Uses checker to see if the model has errors
         """
 
-        if os.path.isfile(SolverConfig.checker):
-            checker = Checker.Checker(SolverConfig.checker)
+        if os.path.isfile(LocalSolver.SolverConfig.checker):
+            checker = Checker.Checker(LocalSolver.SolverConfig.checker)
             if self.instance is not None:
                 # check model
                 # convert shown atoms (which should be the actions) into a list of strings
@@ -219,9 +225,8 @@ class Solver():
 
     def callSolver(self, step=None):
         """
-        This is the main call to the solver. Parameter step is used for solve calls after the first one.
-        :param step: Must be the amount of steps that were already executed. Adds the actionS up to this number to
-                     the history. Leave as None for the first call.
+        This is the main call to the solver. Parameter step is used to know which steps were already executed.
+        :param step: Must be the amount of steps that were already executed.
         """
         print "Solving... \n"
         if step is not None and self.solved:
@@ -233,7 +238,9 @@ class Solver():
 
     def solveFullPlan(self):
         """
-        Use this to solve once and return the plan and requests. Does not work for online solving.
+        Use this to solve once and return the plan and requests as lists clingo objects. Does not work for online solving. Mostly here for the
+        -o option
+        :return: list of clingo objects that represent actions and list of clingo objects that represent requests
         """
         self.solve()
         return self.completePlan, self.reqs.val
@@ -261,7 +268,7 @@ class Solver():
 
     def updateHistory(self, step):
         """
-        Updates the History of actions that will be added to the solver as externals
+        Updates the History of actions up to the time step provided
         :param step: The last time step where actions will be added
         """
 
@@ -304,7 +311,6 @@ class Solver():
         :param time: time at which the request is added
         :param params: parameters of the request. Differs depending on the type. Either direction and destination for CALL requests
                        or elevator ID and destination for DELIVER requests
-        :return: void
         """
         if self.solvingStep == 0:
             requestTime = 1
@@ -324,7 +330,6 @@ class Solver():
     def stats(self):
         """
         Update the stats. Called after each solver call. Currently, clingo stats are not working.
-        :return: void
         """
         statistics = json.loads(json.dumps(self.control.statistics, sort_keys=True, indent=4, separators=(',', ': ')))
 
@@ -367,13 +372,20 @@ class Solver():
         return reqs
 
     def getStats(self):
-        # order matters if being used by the InfoPanel class of the visualizer
+        """
+        Returns the stats as a dictionary, key is their name and value is a string
+        :return: dictionary of stats
+        """
         return {self.totalSolvingTime.name :  self.totalSolvingTime.string(),
                 self.totalGroundingTime.name :  self.totalGroundingTime.string(),
                 self.checkErrors.name : self.checkErrors.string()}
 
     def reset(self):
-        self.control = clingo.Control(SolverConfig.options)
+        """
+        Reset the solver. Preserves the instance. Does not ground.
+        :return:
+        """
+        self.control = clingo.Control(LocalSolver.SolverConfig.options)
         if self.instanceType == "str":
             self.loadInstanceStr(self.instanceStr)
         elif self.instanceType == "file":
@@ -429,6 +441,9 @@ class Model():
 
 
 class Stat(object):
+    """
+    Simple stat object to hold stat names and values. Also provides a simple string function
+    """
 
     def __init__(self, name = "", val = None):
 

@@ -8,8 +8,13 @@ from ServerConfig import *
 
 
 class SolverHandler(SocketServer.StreamRequestHandler):
+    """
+    Implements request handler for a TCP message stream
+    """
 
     def __init__(self, request, client_address, server):
+
+        # holds the functions that handle the request types from the client
         self.replyFunction = {SOLVE : self.solve, BASE : self.sendBase, ADDREQS : self.addRequest, RESET : self.reset,
                               ENCODING: self.setEncoding}
 
@@ -17,7 +22,10 @@ class SolverHandler(SocketServer.StreamRequestHandler):
 
 
     def handle(self):
-
+        """
+        This method gets called every time there is a new message. It reads the first line of the input (the message type)
+        and calls the appropriate handler function.
+        """
         reply = self.rfile.readline().strip()
         print "Message received: " + reply
 
@@ -33,17 +41,23 @@ class SolverHandler(SocketServer.StreamRequestHandler):
         print " ---------------------------------------"
 
     def receive(self):
-        reply = ""
+        """
+        This method facilitates receiving a large argument.
+        :return: message string
+        """
+        msg = ""
         while 1:
             line = self.rfile.readline().strip()
             if line == DONE:
                 break
-            reply += line + "\n"
+            msg += line + "\n"
 
-        return reply
+        return msg
 
     def setEncoding(self):
-
+        """
+        Handler for the ENCODING type message. Just tries to load the new encoding. sends a success of fail message
+        """
         encoding = self.rfile.readline().strip()
         print "Encoding change request received: " + encoding
         prevencoding = self.server.solver.encoding
@@ -53,6 +67,8 @@ class SolverHandler(SocketServer.StreamRequestHandler):
             print "Encoding has been set and instance has been reset"
             msg = SUCCESS + "\n" + DONE + "\n"
         except RuntimeError:
+            self.server.solver.encoding = prevencoding
+            self.server.solver.reset()
             print "There was an error with the given file, encoding not set."
             msg = FAIL + "\n" + DONE + "\n"
 
@@ -63,6 +79,10 @@ class SolverHandler(SocketServer.StreamRequestHandler):
 
 
     def sendBase(self):
+        """
+        Handler for the BASE type message. Received the instance and tries to load it. It then makes the dictionary and
+        sends the serialized json string
+        """
         # Receive instance
         reply = self.receive()
 
@@ -84,7 +104,10 @@ class SolverHandler(SocketServer.StreamRequestHandler):
         print "Base sent."
 
     def solve(self):
-
+        """
+        Handler for the SOLVE type message. Received the step it continue on. It then makes the dictionary and
+        sends the serialized json string
+        """
         step = int(self.rfile.readline().strip())
         print "step received " + str(step)
         self.server.solver.callSolver(step)
@@ -101,7 +124,9 @@ class SolverHandler(SocketServer.StreamRequestHandler):
         print "Reply sent.\n"
 
     def addRequest(self):
-
+        """
+        Handler for the ADDREQS type message. Received the parameters and adds them. It sends a succes or fail message
+        """
         print "Reading request..."
         type = self.rfile.readline().strip()
         time = int(self.rfile.readline().strip())
@@ -117,6 +142,9 @@ class SolverHandler(SocketServer.StreamRequestHandler):
         self.request.sendall(msg)
 
     def reset(self):
+        """
+        Handler for the Reset type message. Resets depending on the mode
+        """
         mode = self.rfile.readline().strip()
 
         print "Acknowledged " + mode + " Reset"
