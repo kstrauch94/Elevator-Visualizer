@@ -5,11 +5,10 @@ V 0.5
 * add New connection tab to manage connection properties
 * add -m option to start solver on local connection
 * add -o parameter can now print holds for requests and create a file with the solution
+* add -e param no longer on Elevator.py as it no longer uses any encoding directly. It has been moved to the server.
 
 V 0.4
 
-* add New window that shows completed and added requests
-* add New window that shows the complete plan
 * add More information in the main window
 
 * upt Initial requests now appear without having to solve first
