@@ -121,7 +121,6 @@ class Solver():
         self.solved = False
 
         self.ret = None
-        self.lastMove = None
 
         # add the last actions (already executed actions)
         for move in self.moved:
@@ -136,6 +135,8 @@ class Solver():
 
         while (self.step < self.imax.number) and\
                 (self.ret == None or (self.istop.string == "SAT" and not self.ret.satisfiable)):
+
+            self.control.release_external(clingo.Function("query", [self.step-1]))
 
             #this is here in case the groundStart function was not called before
             if self.grounded == 0 and self.step == 1:
@@ -155,14 +156,12 @@ class Solver():
 
             self.control.assign_external(clingo.Function("query", [self.step]), True)
             self.ret = self.control.solve(self.on_model)
-            self.control.release_external(clingo.Function("query", [self.step]))
 
             self.step = self.step + 1
 
     def on_model(self, model):
 
         print "Model found\n"
-
         self.solvingStep += 1
         self.step = self.solvingStep
 
@@ -233,7 +232,7 @@ class Solver():
             self.updateHistory(step)
         self.solve()
         self.check()
-        #self.stats()
+        self.stats()
         print "Finished Solving.\n"
 
     def solveFullPlan(self):
@@ -332,9 +331,8 @@ class Solver():
         Update the stats. Called after each solver call. Currently, clingo stats are not working.
         """
         statistics = json.loads(json.dumps(self.control.statistics, sort_keys=True, indent=4, separators=(',', ': ')))
-
-        solve = statistics["summary"]["time_solve"]
-        ground = statistics["summary"]["time_total"] - self.control.stats["summary"]["time_solve"]
+        solve = statistics["summary"]["times"]["solve"]
+        ground = statistics["summary"]["times"]["total"] - solve
 
         #record stats
 
