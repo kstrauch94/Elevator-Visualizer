@@ -6,7 +6,7 @@ import VisClient
 import VisConfig
 from Constants import *
 from LocalSolver import LocalClient
-
+from LocalSolver import SolverConfig
 
 class ElevatorVis(QtGui.QWidget):
     """
@@ -246,7 +246,7 @@ class ElevatorInterface(QtCore.QObject):
 
         # This has the Socket client and the local solver. They both have the same functions and return the same thing.
         # Use the bridge @property to acces the correct one based on the self.mode variable.
-        self.solverConns = {SOCKET: VisClient.VisSocket(), LOCAL: LocalClient.Connect()}
+        self.solverConns = {SOCKET: VisClient.VisSocket(), LOCAL: LocalClient.Connect(encoding=SolverConfig.encoding)}
         self.mode = LOCAL
 
         self.elevatorCount = None

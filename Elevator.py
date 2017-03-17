@@ -6,6 +6,7 @@ from argparse import RawTextHelpFormatter
 import VisConfig
 from windows import Constants
 from windows import MainWindow
+from LocalSolver import SolverConfig
 
 
 def writeAnswer(instance, actions, reqs):
@@ -44,6 +45,7 @@ if __name__ == "__main__":
                                                  "2 : Also print the request atoms.\n3 : Write answer to a file", action="count", default=0)
     parser.add_argument("-m", "--local-mode", help="Set initial connection mode to local instead of socket", action="store_true")
     parser.add_argument("-i", "--instance", help="Instance file name to use initially.", default=VisConfig.instance)
+    parser.add_argument("-e", "--encoding", help="Encoding that the LOCAL solver uses initially.", default=SolverConfig.encoding)
     parser.add_argument("-H", "--host", help="Host IP address", default=VisConfig.host)
     parser.add_argument("-P", "--port", help="Port for the server", default=VisConfig.port)
 
@@ -54,6 +56,8 @@ if __name__ == "__main__":
     VisConfig.instance = args.instance
     VisConfig.host = args.host
     VisConfig.port = args.port
+
+    SolverConfig.encoding = args.encoding
 
     connectionMode = Constants.SOCKET
     if args.local_mode:
