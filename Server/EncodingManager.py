@@ -19,15 +19,10 @@ class Solver():
             self.control.load(encoding)
 
         self.instance = None
-        self.instanceType = None
         if instance is not None:
-            if os.path.isfile(instance):
-                self.instance = instance
-                self.control.load(instance)
-                self.instanceType = "file"
-            else:
-                self.loadInstanceStr(instance)
-                self.instanceType = "str"
+            self.control.load(instance)
+
+        self.tempinstancename = None
 
         self.grounded = 0
 
@@ -66,12 +61,15 @@ class Solver():
     def loadInstance(self, instance):
         self.instance = instance
         self.control.load(self.instance)
-        self.instanceType = "file"
 
     def loadInstanceStr(self, instanceStr):
-        self.instanceStr = instanceStr
-        self.control.add("base", [], instanceStr)
-        self.instanceType = "str"
+        from tempfile import NamedTemporaryFile
+
+        self.tempinstancename = NamedTemporaryFile()
+        with open(self.tempinstancename.name, "w") as temp:
+            temp.write(instanceStr)
+
+        self.loadInstance(self.tempinstancename.name)
 
     def loadEncoding(self, encoding):
         self.encoding = encoding
@@ -87,11 +85,12 @@ class Solver():
         self.reqs.val = []
 
         for x in self.control.symbolic_atoms:
-            if x.is_fact:
-                atom = x.symbol
-                if atom.name == "holds":
-                    if atom.arguments[0].name == "request":
-                        self.reqs.val.append(atom)
+            if not x.is_fact:
+                continue
+            atom = x.symbol
+            if atom.name == "holds":
+                if atom.arguments[0].name == "request":
+                    self.reqs.val.append(atom)
 
     def getBaseValues(self):
         """
@@ -109,7 +108,6 @@ class Solver():
     def groundStart(self):
         """
         Have to call this if something is to be added at time 0, E.G requests
-        :return: void
         """
 
         if self.grounded == 0 and self.step == 1:
@@ -122,13 +120,13 @@ class Solver():
 
         self.ret = None
 
-        # add the last actions (already executed actions)
+        # add history (already executed actions)
         for move in self.moved:
             self.control.assign_external(move, True)
 
         # add any new requests
         if self.newRequests != []:
-            if self.grounded == 0:
+            if self.grounded == 0: #only ground here if there are requests
                 self.groundStart()
             for req in self.newRequests:
                 self.control.assign_external(req, True)
@@ -181,9 +179,6 @@ class Solver():
         self.model.actions = self.completePlan
         self.model.requests = self.reqs.val
 
-        if SolverConfig.printAtoms:
-            self.printAtoms(model.symbols(atoms=True))
-
     def actionFilter(self, atom):
         """
         Filters an action atom of the form do(E,A,T) and return the elevator number and action type
@@ -214,13 +209,11 @@ class Solver():
 
         if os.path.isfile(SolverConfig.checker):
             checker = Checker.Checker(SolverConfig.checker)
-            if self.instance is not None:
+            if os.path.isfile(self.instance):
                 # check model
                 # convert shown atoms (which should be the actions) into a list of strings
-                checker.checkList(self.instance, [a.__str__() for a in self.model.actions])
-                self.checkErrors.val = self.checker.shownAtoms
-
-
+                checker.checkList(self.instance, [str(a) for a in self.model.actions])
+                self.checkErrors.val = checker.shownAtoms
 
     def callSolver(self, step=None):
         """
@@ -237,7 +230,7 @@ class Solver():
 
     def solveFullPlan(self):
         """
-        Use this to solve once and return the plan and requests as lists clingo objects. Does not work for online solving. Mostly here for the
+        Use this to solve once and return the plan and requests as a list of clingo objects. Does not work for online solving. Mostly here for the
         -o option
         :return: list of clingo objects that represent actions and list of clingo objects that represent requests
         """
@@ -263,83 +256,6 @@ class Solver():
 
 
         return plan
-
-
-    def updateHistory(self, step):
-        """
-        Updates the History of actions up to the time step provided
-        :param step: The last time step where actions will be added
-        """
-
-        for action in self.completePlan:
-            time = action.arguments[-1].number
-            if time >= self.solvingStep and time <= step:
-                self.moved.append(clingo.Function("history", action.arguments))
-
-        self.solvingStep = step
-        self.step = step
-
-    def printAtoms(self, atoms):
-        # This is mostly for debugging encoding
-        # atoms is usually a list of all atoms in the model
-        # use model.symbols(atoms=True) as parameter inside the on_model function to give the full atom list
-        goal = None
-
-        for atom in atoms:
-            if atom.name == "holds":
-                if atom.arguments[0].name == "request" and atom.arguments[-1].number == self.solvingStep:
-                    print atom
-                if atom.arguments[0].name == "at" and atom.arguments[-1].number == self.solvingStep:
-                    print atom
-
-            if atom.name == "goal":
-                if goal != None:
-                    if atom.arguments[0] > goal.arguments[0]:
-                        goal = atom
-                else:
-                    goal = atom
-
-
-        print goal
-
-    def addRequest(self, reqtype, time, params):
-        """
-        Create a clingo function object for the request and add it to the request list of externals.
-
-        :param reqtype: either call or deliver, it should be as the ones defined in the Constants.py file.
-        :param time: time at which the request is added
-        :param params: parameters of the request. Differs depending on the type. Either direction and destination for CALL requests
-                       or elevator ID and destination for DELIVER requests
-        """
-        if self.solvingStep == 0:
-            requestTime = 1
-        else:
-            requestTime = time
-
-
-        if reqtype == REQ_CALL:
-            request = clingo.Function("callrequest", [clingo.Function(params[0]), params[1], requestTime])
-
-        if reqtype == REQ_DELIVER:
-            request = clingo.Function("deliverrequest", [params[0], params[1], requestTime])
-
-        print "Request " + str(request) + " has been added."
-        self.newRequests.append(request)
-
-    def stats(self):
-        """
-        Update the stats. Called after each solver call. Currently, clingo stats are not working.
-        """
-        statistics = json.loads(json.dumps(self.control.statistics, sort_keys=True, indent=4, separators=(',', ': ')))
-        solve = statistics["summary"]["times"]["solve"]
-        ground = statistics["summary"]["times"]["total"] - solve
-
-        #record stats
-
-        self.totalSolvingTime.val += float(solve)
-        self.totalGroundingTime.val += float(ground)
-
-
 
     def getRequestInfo(self):
         """
@@ -369,6 +285,56 @@ class Solver():
 
         return reqs
 
+    def updateHistory(self, step):
+        """
+        Updates the History of actions up to the time step provided
+        :param step: The last time step where actions will be added
+        """
+
+        for action in self.completePlan:
+            time = action.arguments[-1].number
+            if time >= self.solvingStep and time <= step:
+                self.moved.append(clingo.Function("history", action.arguments))
+
+        self.solvingStep = step
+        self.step = step
+
+    def addRequest(self, reqtype, time, params):
+        """
+        Create a clingo function object for the request and add it to the request list of externals.
+
+        :param reqtype: either call or deliver, it should be as the ones defined in the Constants.py file.
+        :param time: time at which the request is added
+        :param params: parameters of the request. Differs depending on the type. Either direction and destination for CALL requests
+                       or elevator ID and destination for DELIVER requests
+        """
+        if self.solvingStep == 0:
+            requestTime = 1
+        else:
+            requestTime = time
+
+
+        if reqtype == REQ_CALL:
+            request = clingo.Function("callrequest", [clingo.Function(params[0]), params[1], requestTime])
+
+        if reqtype == REQ_DELIVER:
+            request = clingo.Function("deliverrequest", [params[0], params[1], requestTime])
+
+        print "Request " + str(request) + " has been added."
+        self.newRequests.append(request)
+
+    def stats(self):
+        """
+        Update the stats. Called after each solver call.
+        """
+        statistics = json.loads(json.dumps(self.control.statistics, sort_keys=True, indent=4, separators=(',', ': ')))
+        solve = statistics["summary"]["times"]["solve"]
+        ground = statistics["summary"]["times"]["total"] - solve
+
+        #record stats
+        self.totalSolvingTime.val += float(solve)
+        self.totalGroundingTime.val += float(ground)
+
     def getStats(self):
         """
         Returns the stats as a dictionary, key is their name and value is a string
@@ -384,10 +350,7 @@ class Solver():
         :return:
         """
         self.control = clingo.Control(SolverConfig.options)
-        if self.instanceType == "str":
-            self.loadInstanceStr(self.instanceStr)
-        elif self.instanceType == "file":
-            self.loadInstance(self.instance)
+        self.loadInstance(self.instance)
 
         self.control.load(self.encoding)
 
@@ -423,9 +386,6 @@ class Solver():
         self.model = Model()
 
         self.getInitialReqs()
-
-
-
 
 class Model():
     """
