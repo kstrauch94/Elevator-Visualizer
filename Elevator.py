@@ -8,7 +8,6 @@ from windows import Constants
 from windows import MainWindow
 from LocalSolver import SolverConfig
 
-
 def writeAnswer(instance, actions, reqs):
     """
     Writes the answer returned from the encoding manager to a file.
@@ -48,7 +47,7 @@ if __name__ == "__main__":
     parser.add_argument("-e", "--encoding", help="Encoding that the LOCAL solver uses initially.", default=SolverConfig.encoding)
     parser.add_argument("-H", "--host", help="Host IP address", default=VisConfig.host)
     parser.add_argument("-P", "--port", help="Port for the server", default=VisConfig.port)
-
+    parser.add_argument("-v", "--verbose", help="Print more information to the console", action="store_true")
 
     args = parser.parse_args()
 
@@ -63,6 +62,7 @@ if __name__ == "__main__":
     if args.local_mode:
         connectionMode = Constants.LOCAL
 
+    VisConfig.verbose = args.verbose
 
     if args.off_line > 0:
         print "Solving encoding"

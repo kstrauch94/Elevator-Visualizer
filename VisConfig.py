@@ -21,3 +21,6 @@ elevatorSeparation = 15
 #size of the elevators and floors in pixels
 size = 32
 
+# Misc config
+
+verbose = False

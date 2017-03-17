@@ -32,8 +32,6 @@ STARTPOS = "startpos"
 REQ_CALL     = "call"
 REQ_DELIVER  = "deliver"
 
-
-
 class MySocket(object):
     """
     Socket class that holds socket information and provides a close and connect functionality
@@ -87,13 +85,16 @@ class MySocket(object):
         for i in range(self.tries):
             try:
                 self._socket.connect((self._host, self._port))
-                print "Connected with host: " + self._host + " and port: " + str(self._port)
+                if VisConfig.verbose:
+                    print "Connected with host: " + self._host + " and port: " + str(self._port)
                 return 1
             except(socket.error, socket.timeout):
-                print "Failed to connect with server\nRetrying in 5 seconds"
+                if VisConfig.verbose:
+                    print "Failed to connect with server\nRetrying in 5 seconds"
                 time.sleep(5)
 
-        print "Failed to connect with server"
+        if VisConfig.verbose:
+            print "Failed to connect with server"
         self._socket = None
         return 0
 
@@ -150,12 +151,12 @@ class VisSocket(MySocket):
         fullmsg += DONE + "\n"
 
         self._socket.sendall(fullmsg)
-
-        print "Waiting for reply..."
+        if VisConfig.verbose:
+            print "Waiting for reply..."
 
         reply = self.receive()
-
-        print "reply received: " + reply
+        if VisConfig.verbose:
+            print "reply received: " + reply
 
         # Message is considered successful if reply is received unless the reply handler says otherwise
         success = 1
@@ -291,7 +292,8 @@ class VisSocket(MySocket):
         :return: int -> success or fail
         """
         self.connect()
-        print "sending request...", type, time, params
+        if VisConfig.verbose:
+            print "sending request...", type, time, params
         return self.communicate(ADDREQS, type, time, params[0], params[1])
 
 
@@ -302,5 +304,6 @@ class VisSocket(MySocket):
         :return: int -> success or fail
         """
         self.connect()
-        print "Sending " + mode + " reset."
+        if VisConfig.verbose:
+            print "Sending " + mode + " reset."
         return self.communicate(RESET, mode)
