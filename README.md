@@ -10,25 +10,25 @@ The visualizer can be configured in the VisCofig.py file. To start the visualize
 ```
 $ python Elevator.py
 ```
+The command opens a visualization window and a control window with several buttons. Press "Initialize Connection" to start visualizing.
 
-If using the socket communication, remember to start the server. The server inclued in the package can be started by using the following command in the server folder:
+
+If using the socket communication, remember to start the server. The server included in the package can be started by using the following command in the server folder:
 ```
 $ python SolverServer.py
 ```
 
-The command opens a visualization window and a control window with several buttons. Press "Initialize Connection" to start visualizing. If using the server make sure to start it.
-
 The visualization has vertical rectangle divided into squares as the elevator shaft. The elevator is a red square. The last action performed is visualized below by either an arrow or a rectangle. An "N" is displayed if no action was taken. Stats might be displayed on the right side of the window.
 
-It is also possible to just solve the instance with the encodings provided in the Config.py file or by arguments, and print the full plan without visualizing by using the -o command. (clingo is required)
+It is also possible to just solve the instance with the local solver and print the full plan without visualizing by using the -o command. -e and -i arguments can be used to set the encoding and the instance.
 
 ```
-$ python Elevator.py -o
+$ python Elevator.py -o -i $INSTANCE -e $ENCODING
 ```
 
 ## Encoding and Instance specification
 
-The encodings and instances specification depend on the system being used. The following specifications are for the built in systems.
+The encodings and instances specification depend on the system being used. The following specifications are for the built in Encoding Manager.
 
 #### When visualizing a plan the plan file must have:
 
