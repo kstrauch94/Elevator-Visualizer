@@ -69,7 +69,6 @@ class ElevatorVis(QtGui.QWidget):
         self.floors = elevator.floors
         self.currentFloor = elevator.currentFloor
         self.lastAction = elevator.lastAction
-        print self.floors, self.currentFloor, self.lastAction
         self.update()
 
     def drawWidget(self, qp):
@@ -134,7 +133,7 @@ class Elevator():
         This should only be called with a new action that directly follows the last one completed
         :param action: Action as defined in the Constants.py file
         """
-        print action
+
         currentFloor = self.history[self.lastStep]
         if action == DOWN and currentFloor == 1:
             print "Invalid move, trying to move down when already at the bottom floor."
@@ -336,7 +335,8 @@ class ElevatorInterface(QtCore.QObject):
         :return: int -> success or fail
         """
 
-        if self.hasToSolve and self.step == self.highestStep:
+        # re add the commented part if you want to solve only after pressing next and at the highest step
+        if self.hasToSolve:# and self.step == self.highestStep:
             if not self.solve():
                 # If solve fails, E.G. cant connect to server or invalid info was received.
                 return 0
