@@ -97,7 +97,7 @@ class Checker(object):
         """
 
         control.ground([("base", [])])
-        control.solve(self.on_model)
+        control.solve(on_model=self.on_model)
 
     def on_model(self, model):
         """
