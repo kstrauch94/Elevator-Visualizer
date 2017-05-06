@@ -82,6 +82,12 @@ class MainWindow(QtGui.QMainWindow):
         planWindow.setShortcut("Ctrl+P")
         windowMenu.addAction(planWindow)
 
+        elevatorWindow = QtGui.QAction("Show Elevator Window", self)
+        elevatorWindow.triggered.connect(lambda: self.elevatorWindow.show())
+        elevatorWindow.setShortcut("Ctrl+W")
+        windowMenu.addAction(elevatorWindow)
+
+
         ### Connect Menu
         connectMenu = self.menuBar.addMenu("Connect")
 
