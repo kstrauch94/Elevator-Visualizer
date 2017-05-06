@@ -320,3 +320,9 @@ class MainWindow(QtGui.QMainWindow):
 
         self.updateInfo()
 
+    def closeEvent(self, QCloseEvent):
+        print "Clicking the x!"
+        self.planWindow.close()
+        self.requestWindow.close()
+        self.elevatorWindow.close()
+
